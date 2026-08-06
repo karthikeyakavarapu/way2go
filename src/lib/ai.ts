@@ -29,8 +29,33 @@ export class AIService {
    * Zero-Hallucination AI Directional Engine
    * Accepts ANY location search query across India / world.
    * Resolves canonical place geocodes via Nominatim OSM + OSRM road provider.
-   * Optionally calls Google Gemini FREE API (if VITE_GEMINI_API_KEY is set).
+   * Integrates Google Gemini 2.0 Flash FREE API when VITE_GEMINI_API_KEY is present.
    */
+
+  public static async fetchGeminiExplanation(promptText: string): Promise<string | null> {
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!geminiKey) return null;
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn('Gemini API call warning:', err);
+    }
+    return null;
+  }
 
   public static async generateDirectionalRoute(
     query: string,
@@ -64,7 +89,15 @@ export class AIService {
         '⭐ Confirm route info after arrival to help fellow travellers'
       ];
 
-      const explanation = `AI parsed verified route: ${matched.title} (${matched.total_duration_minutes} min • ₹${matched.total_cost_inr} • ${matched.confidence_score}% Verified accuracy).`;
+      let explanation = `AI parsed verified route: ${matched.title} (${matched.total_duration_minutes} min • ₹${matched.total_cost_inr} • ${matched.confidence_score}% Verified accuracy).`;
+
+      // Try Google Gemini API if configured
+      const geminiText = await this.fetchGeminiExplanation(
+        `Summarize the public transit route from ${matched.origin_name} to ${matched.destination_name} taking ${matched.total_duration_minutes} minutes for ₹${matched.total_cost_inr} in 2 short, helpful sentences.`
+      );
+      if (geminiText) {
+        explanation = `Google Gemini AI: ${geminiText}`;
+      }
 
       return {
         origin: matched.origin_name,
@@ -107,7 +140,14 @@ export class AIService {
       '🛡️ Share your live journey for safety tracking'
     ];
 
-    const dynamicExplanation = `Real-time road provider calculated route to ${destinationPlace.name} (${dynamicRoute.total_duration_minutes} min • ${dynamicRoute.total_distance_km} km).`;
+    let dynamicExplanation = `Real-time road provider calculated route to ${destinationPlace.name} (${dynamicRoute.total_duration_minutes} min • ${dynamicRoute.total_distance_km} km).`;
+
+    const geminiText = await this.fetchGeminiExplanation(
+      `Summarize the travel route to ${destinationPlace.name} covering ${dynamicRoute.total_distance_km} km in ${dynamicRoute.total_duration_minutes} minutes in 2 short sentences.`
+    );
+    if (geminiText) {
+      dynamicExplanation = `Google Gemini AI: ${geminiText}`;
+    }
 
     return {
       origin: dynamicRoute.origin_name,
