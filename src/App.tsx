@@ -53,7 +53,7 @@ const AppContent: React.FC = () => {
       <div>
         <OfflineSyncBanner />
         <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 pb-24 md:pb-8">
           {renderActivePage()}
         </main>
       </div>
