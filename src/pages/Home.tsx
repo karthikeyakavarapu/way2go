@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ShieldCheck, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle, Users } from 'lucide-react';
+import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle, Users, Plus } from 'lucide-react';
 import { useJourney } from '../context/JourneyContext';
 import { useAuth } from '../context/AuthContext';
 import { PlaceResolutionService } from '../lib/placeResolution';
 import { RouteComparisonService } from '../lib/routeComparison';
 import { RouteComparisonCard } from '../components/discovery/RouteComparisonCard';
+import { SimpleRouteBuilder } from '../components/route/SimpleRouteBuilder';
 import type { RouteGuide, RouteComparisonResult } from '../types';
 
 interface HomeProps {
@@ -13,13 +14,14 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
-  const { routes, setSelectedRoute, activeRecording, safeJourney } = useJourney();
+  const { routes, setSelectedRoute } = useJourney();
   const { user } = useAuth();
 
   const [originText, setOriginText] = useState('SRM Ramapuram Campus');
   const [destinationQuery, setDestinationQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [activeComparison, setActiveComparison] = useState<RouteComparisonResult | null>(null);
+  const [showSimpleRouteBuilder, setShowSimpleRouteBuilder] = useState(false);
 
   const getGreeting = () => {
     const hrs = new Date().getHours();
@@ -80,7 +82,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
   return (
     <div className="space-y-6 py-4 max-w-xl mx-auto">
       
-      {/* 1. Personal Greeting Header */}
+      {/* 1. Personal Greeting Header & + ADD ROUTE CTA */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-extrabold text-2xl text-slate-100 tracking-tight">
@@ -91,12 +93,13 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
           </p>
         </div>
 
-        {safeJourney && (
-          <div className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 animate-pulse">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Safe Journey Active</span>
-          </div>
-        )}
+        <button
+          onClick={() => setShowSimpleRouteBuilder(true)}
+          className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-sky-500/25 flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>+ ADD ROUTE</span>
+        </button>
       </div>
 
       {/* 2. Hero Search Card: WHERE DO YOU WANT TO GO? */}
@@ -156,7 +159,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         <RouteComparisonCard
           comparison={activeComparison}
           onStartRoute={() => onStartRoute(activeComparison.mapRoute)}
-          onRecordRoute={() => setActiveTab('explore')}
+          onRecordRoute={() => setShowSimpleRouteBuilder(true)}
         />
       )}
 
@@ -193,13 +196,13 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         </button>
 
         <button
-          onClick={() => setActiveTab('explore')}
+          onClick={() => setShowSimpleRouteBuilder(true)}
           className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
         >
           <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
             <Radio className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[10px] font-bold text-slate-300">Record</span>
+          <span className="text-[10px] font-bold text-slate-300">+ Route</span>
         </button>
       </div>
 
@@ -231,27 +234,15 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         </div>
       </div>
 
-      {/* 6. Active Journey Banner (Only if active) */}
-      {activeRecording && (
-        <div className="bg-emerald-950/60 border border-emerald-500/40 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping shrink-0" />
-            <div>
-              <span className="text-[10px] font-mono uppercase font-bold text-emerald-300 block">
-                JOURNEY IN PROGRESS
-              </span>
-              <h4 className="font-extrabold text-xs text-slate-100">
-                Recording path ({Math.round(activeRecording.distance_meters / 1000 * 10) / 10} km)
-              </h4>
-            </div>
-          </div>
-          <button
-            onClick={() => setActiveTab('explore')}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-extrabold text-xs shadow-md shrink-0 cursor-pointer"
-          >
-            Open Live Map
-          </button>
-        </div>
+      {/* 6. Simple Route Builder Modal */}
+      {showSimpleRouteBuilder && (
+        <SimpleRouteBuilder
+          onClose={() => setShowSimpleRouteBuilder(false)}
+          onSuccess={() => {
+            setShowSimpleRouteBuilder(false);
+            setActiveTab('explore');
+          }}
+        />
       )}
 
       {/* 7. Routes Travellers Recommend (With Route Health Badges) */}

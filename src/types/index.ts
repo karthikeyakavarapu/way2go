@@ -376,6 +376,45 @@ export interface GovInfraReport {
   created_at: string;
 }
 
+export interface TravelReel {
+  id: string;
+  title: string;
+  video_url: string;
+  thumbnail_url?: string;
+  city: string;
+  location_name: string;
+  location_coords?: LatLng;
+  attached_route_id?: string;
+  attached_place_name?: string;
+  creator_id: string;
+  creator_name: string;
+  creator_avatar?: string;
+  likes_count: number;
+  comments_count: number;
+  category: 'Place' | 'Route' | 'Food' | 'Beach' | 'Stay' | 'Transit' | 'Nature';
+  moderation_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  created_at: string;
+}
+
+export interface RouteStepDraft {
+  id: string;
+  step_number: number;
+  transport_mode: TransportMode;
+  title: string;
+  start_point: string;
+  end_point: string;
+  instruction: string;
+  distance_meters: number;
+  estimated_minutes: number;
+  cost_inr?: number;
+  bus_number?: string;
+  metro_line?: string;
+  direction?: string;
+  photo_url?: string;
+  video_url?: string;
+  note?: string;
+}
+
 export interface TransitPlanningGap {
   id: string;
   origin: string;

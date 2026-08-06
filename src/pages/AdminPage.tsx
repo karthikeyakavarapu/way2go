@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { DeveloperVerificationPortal } from '../components/admin/DeveloperVerificationPortal';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { GroupTravelService } from '../lib/groupTravel';
-import { CheckCircle2, DollarSign, Bus } from 'lucide-react';
-import type { OperatorOffer } from '../types';
+import { TravelReelsService } from '../lib/reels';
+import { CheckCircle2, DollarSign, Bus, Video, Trash2 } from 'lucide-react';
+import type { OperatorOffer, TravelReel } from '../types';
 
 export const AdminPage: React.FC = () => {
   const [offers, setOffers] = useState<OperatorOffer[]>(() => GroupTravelService.getOperatorOffers());
+  const [reels, setReels] = useState<TravelReel[]>(() => TravelReelsService.getReels(undefined, true));
   const [commissionRate, setCommissionRate] = useState(8);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -14,6 +16,13 @@ export const AdminPage: React.FC = () => {
     GroupTravelService.adminApproveOffer(offerId);
     setOffers(GroupTravelService.getOperatorOffers());
     setNotice(`Operator offer approved and published to user marketplace!`);
+    setTimeout(() => setNotice(null), 3000);
+  };
+
+  const handleRemoveReel = (reelId: string) => {
+    TravelReelsService.setReelModeration(reelId, 'REJECTED');
+    setReels(TravelReelsService.getReels(undefined, true));
+    setNotice(`Travel Reel removed by Admin.`);
     setTimeout(() => setNotice(null), 3000);
   };
 
@@ -50,6 +59,38 @@ export const AdminPage: React.FC = () => {
           {notice}
         </div>
       )}
+
+      {/* Travel Reels Moderation Queue */}
+      <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-purple-500/40 bg-slate-950 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+          <h2 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
+            <Video className="w-5 h-5 text-purple-400" />
+            <span>TRAVEL REELS MODERATION QUEUE ({reels.length})</span>
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {reels.map((reel) => (
+            <div key={reel.id} className="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/30">
+                  📍 {reel.city} • {reel.category}
+                </span>
+                <h4 className="font-extrabold text-slate-100 line-clamp-1">{reel.title}</h4>
+                <p className="text-[11px] text-slate-400 font-mono">By {reel.creator_name}</p>
+              </div>
+
+              <button
+                onClick={() => handleRemoveReel(reel.id)}
+                className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Remove</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Operator Group Travel Offers Review Queue */}
       <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-sky-500/40 bg-slate-950 space-y-4 shadow-xl">
