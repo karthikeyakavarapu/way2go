@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Compass, Sparkles } from 'lucide-react';
+import { Award, LogOut } from 'lucide-react';
 import { getLocalPassport } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { TripStoryGenerator } from './TripStoryGenerator';
@@ -7,7 +7,14 @@ import { PersonalSearch } from './PersonalSearch';
 
 export const TravelPassportView: React.FC = () => {
   const passport = getLocalPassport();
-  const { user } = useAuth();
+  const { user, signOutUser } = useAuth();
+
+  const demoBadgeDetails = [
+    { title: 'Chennai Pioneer', desc: 'Verified 5+ Chennai student routes', icon: '🏆' },
+    { title: 'Verified Guide', desc: 'Passed Lead Developer Karthik Quality Check', icon: '⭐' },
+    { title: 'Budget Master', desc: 'Saved 500+ INR using public transit', icon: '💰' },
+    { title: 'Eco Commuter', desc: 'Saved 28kg carbon using bus/train', icon: '🌱' }
+  ];
 
   return (
     <div className="space-y-6">
@@ -20,25 +27,36 @@ export const TravelPassportView: React.FC = () => {
           <div className="flex items-center gap-3">
             <img
               src={user?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250"}
-              alt={user?.full_name}
+              alt={user?.full_name || 'User'}
               className="w-14 h-14 rounded-2xl border-2 border-sky-400 object-cover shadow-lg"
             />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-extrabold text-xl text-slate-100">{user?.full_name}</h2>
+                <h2 className="font-extrabold text-xl text-slate-100">{user?.full_name || 'Traveller'}</h2>
                 <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded font-mono font-bold">
-                  {user?.badge_title}
+                  {user?.badge_title || 'Explorer'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono mt-0.5">
-                Passport ID: WAY2GO-PASSPORT-2026-IND
+                {user?.email || 'karthikeyakavarapu@gmail.com'}
               </p>
             </div>
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Reputation</span>
-            <span className="text-xl font-extrabold text-sky-400 font-mono">{user?.reputation_score}%</span>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Reputation</span>
+              <span className="text-xl font-extrabold text-sky-400 font-mono">{user?.reputation_score || 98}%</span>
+            </div>
+
+            <button
+              onClick={signOutUser}
+              className="px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              title="Sign Out of Account"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>SIGN OUT</span>
+            </button>
           </div>
         </div>
 
@@ -60,73 +78,36 @@ export const TravelPassportView: React.FC = () => {
           </div>
 
           <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Carbon Saved</span>
-            <span className="text-lg font-extrabold text-emerald-300 font-mono">{passport.carbon_saved_kg} kg</span>
+            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Earned Badges</span>
+            <span className="text-lg font-extrabold text-amber-400 font-mono">{passport.badges.length || 4}</span>
           </div>
         </div>
 
-        {/* Badges Earned */}
-        <div className="space-y-2">
-          <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+        {/* Badges Section */}
+        <div className="space-y-3 pt-2">
+          <h3 className="font-extrabold text-sm text-slate-200 flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-400" />
-            Verified Contribution Badges:
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {passport.badges.map((b, idx) => (
-              <div key={idx} className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-amber-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{b}</span>
+            <span>UNLOCKED TRAVELLER BADGES</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {demoBadgeDetails.map((b, idx) => (
+              <div key={idx} className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                <span className="text-2xl p-2 bg-slate-950 rounded-lg border border-slate-800">{b.icon}</span>
+                <div>
+                  <h4 className="font-extrabold text-xs text-slate-100">{b.title}</h4>
+                  <p className="text-[11px] text-slate-400">{b.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Travel DNA Breakdown */}
-        <div className="space-y-3 pt-4 border-t border-slate-800">
-          <h4 className="font-extrabold text-sm text-slate-100 flex items-center gap-1.5">
-            <Compass className="w-4 h-4 text-sky-400" />
-            PERSONAL TRAVEL DNA PROFILE
-          </h4>
-          <div className="space-y-2 text-xs">
-            <div>
-              <div className="flex justify-between text-slate-300 font-semibold mb-1">
-                <span>Nature & Coastal</span>
-                <span className="font-mono text-sky-400">{passport.travel_dna.nature}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                <div className="h-full bg-sky-400 rounded-full" style={{ width: `${passport.travel_dna.nature}%` }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-slate-300 font-semibold mb-1">
-                <span>Budget Optimization</span>
-                <span className="font-mono text-emerald-400">{passport.travel_dna.budget}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${passport.travel_dna.budget}%` }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-slate-300 font-semibold mb-1">
-                <span>Food & Local Culinary</span>
-                <span className="font-mono text-amber-400">{passport.travel_dna.food}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                <div className="h-full bg-amber-400 rounded-full" style={{ width: `${passport.travel_dna.food}%` }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      {/* Personal Travel History Search Engine */}
       <PersonalSearch />
-
-      {/* Shareable Trip Story & Travel Wrapped Card */}
       <TripStoryGenerator />
+
     </div>
   );
 };
