@@ -1,6 +1,6 @@
-export type UserRole = 'user' | 'contributor' | 'admin' | 'developer' | 'traveller' | 'helper';
+export type UserRole = 'user' | 'contributor' | 'operator' | 'admin' | 'developer' | 'traveller' | 'helper';
 
-export type RouteHealth = 'working_well' | 'may_have_changes' | 'recently_reported_problem';
+export type RouteHealth = 'working_well' | 'may_have_changes' | 'recently_reported_problem' | 'no_traveller_data';
 
 export interface UserProfile {
   id: string;
@@ -137,6 +137,105 @@ export interface RouteGuide {
   primary_source_label?: string;
 }
 
+export type RouteMatchStatus = 
+  | 'EXACT_MATCH' 
+  | 'PARTIAL_MATCH' 
+  | 'ALTERNATIVE_ROUTE' 
+  | 'NO_MATCH' 
+  | 'NO_TRAVELLER_DATA';
+
+export interface RouteComparisonResult {
+  matchStatus: RouteMatchStatus;
+  matchPercentage: number;
+  mapRoute: RouteGuide;
+  travellerRoute?: RouteGuide;
+  matchingSegmentsCount: number;
+  totalSegmentsCount: number;
+  differencesDescription: string[];
+  travellerCount: number;
+  lastVerifiedLabel: string;
+  routeHealth: RouteHealth;
+  isNoTravellerData: boolean;
+}
+
+export type GroupRequestStatus = 
+  | 'OPEN' 
+  | 'OFFERS_RECEIVED' 
+  | 'ADMIN_REVIEW' 
+  | 'APPROVED' 
+  | 'BOOKED' 
+  | 'CANCELLED' 
+  | 'COMPLETED';
+
+export interface GroupRequest {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  origin: string;
+  destination: string;
+  travel_date: string; // ISO date e.g. 2026-08-15
+  passenger_count: number;
+  max_budget_per_person_inr?: number;
+  status: GroupRequestStatus;
+  created_at: string;
+  offers_count: number;
+}
+
+export type OperatorOfferStatus = 
+  | 'SUBMITTED' 
+  | 'ADMIN_APPROVED' 
+  | 'REJECTED' 
+  | 'ACCEPTED_BY_USER';
+
+export interface OperatorOffer {
+  id: string;
+  group_request_id: string;
+  operator_id: string;
+  operator_name: string;
+  operator_phone: string;
+  vehicle_type: string; // e.g. '30-Seat AC Bus', '12-Seat Traveller Van'
+  capacity: number;
+  departure_time: string;
+  price_total_inr: number;
+  price_per_person_inr: number;
+  platform_commission_percent: number; // e.g. 8%
+  platform_commission_inr: number;
+  operator_net_amount_inr: number;
+  status: OperatorOfferStatus;
+  admin_approved: boolean;
+  rating: number;
+  cancellation_policy: string;
+  created_at: string;
+}
+
+export interface OperatorProfile {
+  id: string;
+  user_id: string;
+  company_name: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  city: string;
+  verification_status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+  rating: number;
+  completed_trips: number;
+  response_speed: string; // e.g. '🟢 Responds in 10 mins'
+  fleet_description: string;
+  created_at: string;
+}
+
+export interface CommissionTransaction {
+  id: string;
+  booking_id: string;
+  operator_id: string;
+  total_amount_inr: number;
+  commission_percent: number;
+  commission_amount_inr: number;
+  operator_amount_inr: number;
+  created_at: string;
+}
+
 export interface RouteConfirmation {
   id: string;
   route_id: string;
@@ -180,17 +279,13 @@ export interface ActiveJourneySession {
   id: string;
   user_id: string;
   route_id?: string;
-  route_title?: string;
-  start_time: number;
-  is_paused: boolean;
-  elapsed_seconds: number;
-  distance_meters: number;
-  current_transport_mode: TransportMode;
+  title: string;
   gps_points: GPSPoint[];
   recorded_media: RecordingMediaItem[];
-  current_segment_index: number;
-  battery_level?: number;
-  gps_accuracy?: number;
+  current_transport_mode: TransportMode;
+  distance_meters: number;
+  elapsed_seconds: number;
+  is_paused: boolean;
   offline_pending_count: number;
 }
 

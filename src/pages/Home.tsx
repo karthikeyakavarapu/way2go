@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ShieldCheck, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ShieldCheck, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle, Users } from 'lucide-react';
 import { useJourney } from '../context/JourneyContext';
 import { useAuth } from '../context/AuthContext';
 import { PlaceResolutionService } from '../lib/placeResolution';
-import type { RouteGuide } from '../types';
+import { RouteComparisonService } from '../lib/routeComparison';
+import { RouteComparisonCard } from '../components/discovery/RouteComparisonCard';
+import type { RouteGuide, RouteComparisonResult } from '../types';
 
 interface HomeProps {
   setActiveTab: (tab: string) => void;
@@ -14,9 +16,10 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
   const { routes, setSelectedRoute, activeRecording, safeJourney } = useJourney();
   const { user } = useAuth();
 
-  const [originText, setOriginText] = useState('📍 Current location');
+  const [originText, setOriginText] = useState('SRM Ramapuram Campus');
   const [destinationQuery, setDestinationQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [activeComparison, setActiveComparison] = useState<RouteComparisonResult | null>(null);
 
   const getGreeting = () => {
     const hrs = new Date().getHours();
@@ -37,8 +40,10 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         r.title.toLowerCase().includes(resolved.name.toLowerCase())
       ) || routes[0];
 
+      // Calculate Deterministic Route Comparison
+      const comp = RouteComparisonService.compareRoutes(matched, routes);
+      setActiveComparison(comp);
       setSelectedRoute(matched);
-      onStartRoute(matched);
     } finally {
       setIsSearching(false);
     }
@@ -141,12 +146,21 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
           >
             <Navigation className="w-5 h-5 text-white transform -rotate-45" />
-            <span>{isSearching ? 'FINDING THE BEST WAY...' : 'FIND MY WAY'}</span>
+            <span>{isSearching ? 'COMPARING MAP & TRAVELLER ROUTES...' : 'FIND MY WAY'}</span>
           </button>
         </form>
       </div>
 
-      {/* 3. Maximum 4 Quick Actions */}
+      {/* 3. Deterministic Route Comparison Output (If user searched) */}
+      {activeComparison && (
+        <RouteComparisonCard
+          comparison={activeComparison}
+          onStartRoute={() => onStartRoute(activeComparison.mapRoute)}
+          onRecordRoute={() => setActiveTab('explore')}
+        />
+      )}
+
+      {/* 4. Maximum 4 Quick Actions */}
       <div className="grid grid-cols-4 gap-2">
         <button
           onClick={() => setActiveTab('explore')}
@@ -189,7 +203,35 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         </button>
       </div>
 
-      {/* 4. Active Journey Banner (Only if active) */}
+      {/* 5. Group Travel Option Card */}
+      <div 
+        onClick={() => setActiveTab('groups')}
+        className="glass-panel p-4 rounded-3xl border border-indigo-500/40 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/60 flex items-center justify-between gap-3 shadow-xl cursor-pointer hover:border-indigo-400 transition-all group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase block">
+              GO TOGETHER & SAVE
+            </span>
+            <h4 className="font-extrabold text-xs sm:text-sm text-slate-100">
+              Going somewhere with a group?
+            </h4>
+            <p className="text-[11px] text-slate-400">
+              Book 20-35 seat buses & vans with verified operators.
+            </p>
+          </div>
+        </div>
+
+        <div className="px-3 py-1.5 rounded-xl bg-indigo-500 text-white font-extrabold text-xs shadow-md shrink-0 flex items-center gap-1">
+          <span>FIND BUS</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </div>
+
+      {/* 6. Active Journey Banner (Only if active) */}
       {activeRecording && (
         <div className="bg-emerald-950/60 border border-emerald-500/40 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3">
@@ -212,7 +254,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         </div>
       )}
 
-      {/* 5. Routes Travellers Recommend (With Route Health Badges) */}
+      {/* 7. Routes Travellers Recommend (With Route Health Badges) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-extrabold text-sm text-slate-200">
@@ -241,7 +283,6 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
                 className="bg-slate-950/90 hover:bg-slate-900/90 border border-slate-800 hover:border-sky-500/50 p-4 rounded-2xl space-y-2.5 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="flex items-center justify-between gap-2">
-                  {/* Route Health Badge */}
                   <div className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${health.bg} ${health.text} ${health.border}`}>
                     {health.icon}
                     <span>{health.label}</span>

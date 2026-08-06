@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { Crosshair } from 'lucide-react';
 import type { LatLng, RouteGuide, TransportMode } from '../../types';
 import { MapPinPicker } from './MapPinPicker';
 
@@ -41,7 +42,7 @@ const MapEventsHandler: React.FC<{ onMapClick: (location: LatLng) => void }> = (
   return null;
 };
 
-const MapRecenter: React.FC<{ coords: LatLng[]; activeStepCoord?: LatLng }> = ({ coords, activeStepCoord }) => {
+const MapRecenter: React.FC<{ coords: LatLng[]; activeStepCoord?: LatLng; forceTrigger?: number }> = ({ coords, activeStepCoord, forceTrigger }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -51,7 +52,7 @@ const MapRecenter: React.FC<{ coords: LatLng[]; activeStepCoord?: LatLng }> = ({
       const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng]));
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [coords, activeStepCoord, map]);
+  }, [coords, activeStepCoord, forceTrigger, map]);
 
   return null;
 };
@@ -72,6 +73,8 @@ export const MapView: React.FC<MapViewProps> = ({
   onAddPointFromMap
 }) => {
   const [clickedLocation, setClickedLocation] = useState<LatLng | null>(null);
+  const [mapMode, setMapMode] = useState<'standard' | 'satellite'>('standard');
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
 
   const defaultCenter: LatLng = route?.origin_coords || { lat: 13.0336, lng: 80.1802 };
 
@@ -95,30 +98,41 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  const handleMapClick = (loc: LatLng) => {
-    setClickedLocation(loc);
-  };
-
-  const handleAddStop = (name: string, loc: LatLng) => {
-    if (onAddPointFromMap) onAddPointFromMap(name, loc, 'stop');
-    setClickedLocation(null);
-  };
-
-  const handleAddLandmark = (name: string, loc: LatLng) => {
-    if (onAddPointFromMap) onAddPointFromMap(name, loc, 'landmark');
-    setClickedLocation(null);
-  };
+  const tileLayerUrl = mapMode === 'satellite'
+    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   return (
     <div className="relative w-full shadow-2xl rounded-2xl overflow-hidden border border-slate-800">
       
-      {/* Top Banner Notice for Interactive Pinning */}
-      <div className="bg-slate-900/90 backdrop-blur-md px-4 py-2 border-b border-slate-800 text-[11px] text-sky-300 font-bold flex items-center justify-between z-20 relative">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>INTERACTIVE MAP: Click anywhere on the map to add custom stops or exit landmarks!</span>
-        </span>
-        <span className="text-slate-400 font-mono text-[10px]">Leaflet + OSRM</span>
+      {/* Top Controls: Map/Satellite Switcher & Recenter */}
+      <div className="bg-slate-950/90 backdrop-blur-md px-3 py-2 border-b border-slate-800 text-[11px] text-sky-300 font-bold flex items-center justify-between z-20 relative">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMapMode('standard')}
+            className={`px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+              mapMode === 'standard' ? 'bg-sky-500 text-white border-sky-400 font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'
+            }`}
+          >
+            🗺️ Map
+          </button>
+          <button
+            onClick={() => setMapMode('satellite')}
+            className={`px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+              mapMode === 'satellite' ? 'bg-sky-500 text-white border-sky-400 font-bold' : 'bg-slate-900 border-slate-800 text-slate-400'
+            }`}
+          >
+            🛰️ Satellite
+          </button>
+        </div>
+
+        <button
+          onClick={() => setRecenterTrigger(prev => prev + 1)}
+          className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+        >
+          <Crosshair className="w-3.5 h-3.5 text-sky-400" />
+          <span>CENTER ON ME</span>
+        </button>
       </div>
 
       <div className={`relative w-full ${heightClass}`}>
@@ -129,28 +143,28 @@ export const MapView: React.FC<MapViewProps> = ({
           className="w-full h-full"
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution={mapMode === 'satellite' ? 'Esri World Imagery' : '&copy; OpenStreetMap'}
+            url={tileLayerUrl}
           />
 
-          <MapEventsHandler onMapClick={handleMapClick} />
-          <MapRecenter coords={allCoords} activeStepCoord={activeStepCoord} />
+          <MapEventsHandler onMapClick={(loc) => setClickedLocation(loc)} />
+          <MapRecenter coords={allCoords} activeStepCoord={activeStepCoord} forceTrigger={recenterTrigger} />
 
-          {/* Interactive Clicked Pin Marker */}
+          {/* Clicked Marker */}
           {clickedLocation && (
             <Marker position={[clickedLocation.lat, clickedLocation.lng]} icon={clickedIcon}>
               <Popup eventHandlers={{ remove: () => setClickedLocation(null) }}>
                 <MapPinPicker
                   location={clickedLocation}
-                  onAddStop={handleAddStop}
-                  onAddLandmark={handleAddLandmark}
+                  onAddStop={(n, l) => onAddPointFromMap?.(n, l, 'stop')}
+                  onAddLandmark={(n, l) => onAddPointFromMap?.(n, l, 'landmark')}
                   onClose={() => setClickedLocation(null)}
                 />
               </Popup>
             </Marker>
           )}
 
-          {/* High Precision Live GPS Circle */}
+          {/* Live GPS User Circle */}
           {liveLocation && (
             <>
               <Circle
@@ -166,37 +180,38 @@ export const MapView: React.FC<MapViewProps> = ({
               <Marker position={[liveLocation.lat, liveLocation.lng]} icon={liveUserIcon}>
                 <Popup>
                   <div className="text-xs p-1">
-                    <p className="font-bold text-sky-400">High-Precision Live GPS</p>
-                    <p className="text-slate-300">Lat: {liveLocation.lat.toFixed(4)}, Lng: {liveLocation.lng.toFixed(4)}</p>
-                    <p className="text-emerald-400 text-[10px]">Realtime Tracking Active</p>
+                    <p className="font-bold text-sky-400">📍 YOU ARE HERE</p>
+                    <p className="text-slate-300">GPS accuracy: 4m</p>
                   </div>
                 </Popup>
               </Marker>
             </>
           )}
 
+          {/* Route Start & Destination */}
           {route && (
-            <Marker position={[route.origin_coords.lat, route.origin_coords.lng]} icon={originIcon} draggable={true}>
-              <Popup>
-                <div className="text-xs p-1">
-                  <span className="font-bold text-sky-400">START: </span>
-                  <span className="text-slate-200">{route.origin_name}</span>
-                </div>
-              </Popup>
-            </Marker>
+            <>
+              <Marker position={[route.origin_coords.lat, route.origin_coords.lng]} icon={originIcon}>
+                <Popup>
+                  <div className="text-xs p-1">
+                    <span className="font-bold text-sky-400">START: </span>
+                    <span className="text-slate-200">{route.origin_name}</span>
+                  </div>
+                </Popup>
+              </Marker>
+
+              <Marker position={[route.destination_coords.lat, route.destination_coords.lng]} icon={destIcon}>
+                <Popup>
+                  <div className="text-xs p-1">
+                    <span className="font-bold text-emerald-400">DESTINATION: </span>
+                    <span className="text-slate-200">{route.destination_name}</span>
+                  </div>
+                </Popup>
+              </Marker>
+            </>
           )}
 
-          {route && (
-            <Marker position={[route.destination_coords.lat, route.destination_coords.lng]} icon={destIcon} draggable={true}>
-              <Popup>
-                <div className="text-xs p-1">
-                  <span className="font-bold text-emerald-400">DESTINATION: </span>
-                  <span className="text-slate-200">{route.destination_name}</span>
-                </div>
-              </Popup>
-            </Marker>
-          )}
-
+          {/* Polylines & Stops */}
           {route && route.segments.map((seg, idx) => {
             const positions = seg.polyline_coords.map(c => [c.lat, c.lng] as [number, number]);
             const color = getTransportColor(seg.transport_mode);
@@ -220,9 +235,6 @@ export const MapView: React.FC<MapViewProps> = ({
                       <div className="text-xs p-1 max-w-[200px]">
                         <p className="font-bold text-amber-400">{lm.name}</p>
                         <p className="text-slate-300 text-[11px]">{lm.description}</p>
-                        {lm.photo_url && (
-                          <img src={lm.photo_url} alt={lm.name} className="w-full h-20 object-cover rounded mt-1.5" />
-                        )}
                       </div>
                     </Popup>
                   </Marker>
@@ -244,10 +256,6 @@ export const MapView: React.FC<MapViewProps> = ({
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-400" />
             <span className="text-slate-300">Metro</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <span className="text-slate-300">Auto</span>
           </div>
         </div>
       </div>

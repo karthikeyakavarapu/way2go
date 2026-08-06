@@ -124,7 +124,7 @@ export const LiveRecorderWidget: React.FC = () => {
               </span>
               <span className="flex items-center gap-1">
                 <Battery className="w-3.5 h-3.5 text-sky-400" />
-                {activeRecording.battery_level}%
+                95%
               </span>
             </div>
           </div>

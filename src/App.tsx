@@ -7,6 +7,8 @@ import { BottomNav } from './components/layout/BottomNav';
 import { Home } from './pages/Home';
 import { Discover } from './pages/Discover';
 import { TripsPage } from './pages/TripsPage';
+import { GroupTravelPage } from './pages/GroupTravelPage';
+import { OperatorPortal } from './pages/OperatorPortal';
 import { AdminPage } from './pages/AdminPage';
 import { DeveloperConsole } from './pages/DeveloperConsole';
 import { TravelPassportView } from './components/passport/TravelPassportView';
@@ -54,6 +56,12 @@ const AppContent: React.FC = () => {
             setActiveTab={setActiveTab} 
           />
         );
+
+      case 'groups':
+        return <GroupTravelPage />;
+
+      case 'operator':
+        return <OperatorPortal />;
 
       case 'profile':
         return (

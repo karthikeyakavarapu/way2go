@@ -130,8 +130,7 @@ export const JourneyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newSession: ActiveJourneySession = {
       id: `rec-${Date.now()}`,
       user_id: 'user-sih-2026-karthik',
-      route_title: customTitle || 'New Recorded Journey',
-      start_time: Date.now(),
+      title: customTitle || 'New Recorded Journey',
       is_paused: false,
       elapsed_seconds: 0,
       distance_meters: 0,
@@ -140,9 +139,6 @@ export const JourneyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         { lat: 13.0336, lng: 80.1802, accuracy: 4.5, speed: 1.2, timestamp: Date.now() }
       ],
       recorded_media: [],
-      current_segment_index: 0,
-      gps_accuracy: 4.5,
-      battery_level: 90,
       offline_pending_count: 0
     };
     setActiveRecording(newSession);
