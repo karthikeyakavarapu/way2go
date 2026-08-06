@@ -1,50 +1,96 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { JourneyProvider } from './context/JourneyContext';
+import { JourneyProvider, useJourney } from './context/JourneyContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { BottomNav } from './components/layout/BottomNav';
 import { Home } from './pages/Home';
 import { Discover } from './pages/Discover';
-import { RecordPage } from './pages/RecordPage';
-import { SafeJourneyPage } from './pages/SafeJourneyPage';
-import { StaysPage } from './pages/StaysPage';
+import { TripsPage } from './pages/TripsPage';
 import { AdminPage } from './pages/AdminPage';
-import { GovPortal } from './pages/GovPortal';
+import { DeveloperConsole } from './pages/DeveloperConsole';
 import { TravelPassportView } from './components/passport/TravelPassportView';
+import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
 import { LandingGate } from './components/auth/LandingGate';
+import { AdminRoute, DeveloperRoute, ProtectedRoute } from './components/auth/ProtectedRoutes';
+import type { RouteGuide } from './types';
 
 const AppContent: React.FC = () => {
   const { user } = useAuth();
+  const { selectedRoute, setSelectedRoute, routes } = useJourney();
   const [hasUnlockedGate, setHasUnlockedGate] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('home');
+
+  const currentRoute = selectedRoute || routes[0];
 
   // If user has not unlocked gate and is not logged in, show LandingGate first
   if (!user && !hasUnlockedGate) {
     return <LandingGate onUnlock={() => setHasUnlockedGate(true)} />;
   }
 
+  const handleStartRoute = (route: RouteGuide) => {
+    setSelectedRoute(route);
+    setActiveTab('journey-active');
+  };
+
   const renderActivePage = () => {
     switch (activeTab) {
       case 'home':
-        return <Home setActiveTab={setActiveTab} />;
+        return (
+          <Home 
+            setActiveTab={setActiveTab} 
+            onStartRoute={handleStartRoute} 
+          />
+        );
+
       case 'explore':
         return <Discover />;
-      case 'record':
-        return <RecordPage />;
-      case 'safe':
-        return <SafeJourneyPage />;
-      case 'stays':
-        return <StaysPage />;
-      case 'passport':
-        return <TravelPassportView />;
+
+      case 'trips':
+        return (
+          <TripsPage 
+            onStartRoute={handleStartRoute} 
+            setActiveTab={setActiveTab} 
+          />
+        );
+
+      case 'profile':
+        return (
+          <ProtectedRoute onRedirect={setActiveTab}>
+            <TravelPassportView />
+          </ProtectedRoute>
+        );
+
+      case 'journey-active':
+        return (
+          <LiveJourneyView 
+            route={currentRoute} 
+            onEndJourney={() => setActiveTab('home')} 
+          />
+        );
+
       case 'admin':
-        return <AdminPage />;
-      case 'gov-portal':
-        return <GovPortal />;
+        return (
+          <AdminRoute onRedirect={setActiveTab}>
+            <AdminPage />
+          </AdminRoute>
+        );
+
+      case 'developer':
+        return (
+          <DeveloperRoute onRedirect={setActiveTab}>
+            <DeveloperConsole />
+          </DeveloperRoute>
+        );
+
       default:
-        return <Home setActiveTab={setActiveTab} />;
+        return (
+          <Home 
+            setActiveTab={setActiveTab} 
+            onStartRoute={handleStartRoute} 
+          />
+        );
     }
   };
 
@@ -59,7 +105,11 @@ const AppContent: React.FC = () => {
       </div>
 
       <Footer />
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <BottomNav 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onStartJourneyClick={() => handleStartRoute(currentRoute)}
+      />
     </div>
   );
 };

@@ -1,4 +1,6 @@
-export type UserRole = 'traveller' | 'contributor' | 'helper' | 'admin';
+export type UserRole = 'user' | 'contributor' | 'admin' | 'developer' | 'traveller' | 'helper';
+
+export type RouteHealth = 'working_well' | 'may_have_changes' | 'recently_reported_problem';
 
 export interface UserProfile {
   id: string;

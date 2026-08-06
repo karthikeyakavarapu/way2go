@@ -1,210 +1,278 @@
 import React, { useState } from 'react';
-import { Compass, Radio, ArrowRight, Bot, MapPin, Bus, ShieldCheck, Building2 } from 'lucide-react';
+import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ShieldCheck, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { useJourney } from '../context/JourneyContext';
 import { useAuth } from '../context/AuthContext';
-import { MapView } from '../components/map/MapView';
-import { RouteSearch } from '../components/discovery/RouteSearch';
-import { AITravelAssistant } from '../components/discovery/AITravelAssistant';
+import { PlaceResolutionService } from '../lib/placeResolution';
+import type { RouteGuide } from '../types';
 
 interface HomeProps {
   setActiveTab: (tab: string) => void;
+  onStartRoute: (route: RouteGuide) => void;
 }
 
-export const Home: React.FC<HomeProps> = ({ setActiveTab }) => {
-  const { routes, selectedRoute, setSelectedRoute } = useJourney();
+export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
+  const { routes, setSelectedRoute, activeRecording, safeJourney } = useJourney();
   const { user } = useAuth();
-  const [activeView, setActiveView] = useState<'search' | 'ai'>('search');
 
-  const handleSearch = (_from: string, _to: string) => {
-    setActiveTab('explore');
+  const [originText, setOriginText] = useState('📍 Current location');
+  const [destinationQuery, setDestinationQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  const getGreeting = () => {
+    const hrs = new Date().getHours();
+    if (hrs < 12) return 'Good morning';
+    if (hrs < 17) return 'Good afternoon';
+    return 'Good evening';
   };
 
-  const currentRoute = selectedRoute || routes[0];
+  const handleFindMyWay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!destinationQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const resolved = await PlaceResolutionService.resolvePlace(destinationQuery);
+      const matched = routes.find(r => 
+        r.destination_name.toLowerCase().includes(resolved.name.toLowerCase()) ||
+        r.title.toLowerCase().includes(resolved.name.toLowerCase())
+      ) || routes[0];
+
+      setSelectedRoute(matched);
+      onStartRoute(matched);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const getRouteHealthBadge = (score: number): { label: string; bg: string; text: string; border: string; icon: React.ReactNode } => {
+    if (score >= 85) {
+      return {
+        label: 'WORKING WELL',
+        bg: 'bg-emerald-500/10',
+        text: 'text-emerald-400',
+        border: 'border-emerald-500/30',
+        icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+      };
+    }
+    if (score >= 65) {
+      return {
+        label: 'MAY HAVE CHANGES',
+        bg: 'bg-amber-500/10',
+        text: 'text-amber-400',
+        border: 'border-amber-500/30',
+        icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+      };
+    }
+    return {
+      label: 'REPORTED PROBLEM',
+      bg: 'bg-rose-500/10',
+      text: 'text-rose-400',
+      border: 'border-rose-500/30',
+      icon: <XCircle className="w-3.5 h-3.5 text-rose-400" />
+    };
+  };
 
   return (
-    <div className="space-y-5 py-3 max-w-5xl mx-auto">
+    <div className="space-y-6 py-4 max-w-xl mx-auto">
       
-      {/* 1. Chalo-Style Hero Header Card */}
-      <section className="glass-panel p-4 sm:p-6 rounded-3xl border border-sky-500/30 bg-slate-950 space-y-4 shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
-              <Bus className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="font-extrabold text-base sm:text-xl text-slate-100">
-                WHERE TO?
-              </h1>
-              <p className="text-[11px] text-slate-400 font-medium">
-                Real-time bus numbers, metro lines & exit gates in {user?.registered_city || 'Chennai'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-            <button
-              onClick={() => setActiveView('search')}
-              className={`px-3 py-1 rounded-lg font-extrabold transition-all ${
-                activeView === 'search' ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Route Search
-            </button>
-            <button
-              onClick={() => setActiveView('ai')}
-              className={`px-3 py-1 rounded-lg font-extrabold transition-all flex items-center gap-1 ${
-                activeView === 'ai' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Bot className="w-3.5 h-3.5" />
-              <span>AI Guide</span>
-            </button>
-          </div>
+      {/* 1. Personal Greeting Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-extrabold text-2xl text-slate-100 tracking-tight">
+            {getGreeting()} 👋
+          </h1>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            {user?.full_name ? `Welcome back, ${user.full_name.split(' ')[0]}` : 'Ready to travel today?'}
+          </p>
         </div>
 
-        {activeView === 'search' ? (
-          <RouteSearch onSearch={handleSearch} />
-        ) : (
-          <AITravelAssistant onSelectRoute={() => setActiveTab('explore')} />
+        {safeJourney && (
+          <div className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold flex items-center gap-1.5 animate-pulse">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Safe Journey Active</span>
+          </div>
         )}
-      </section>
+      </div>
 
-      {/* 2. Quick Action Grid (4 Clean 1-Tap Tiles) */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* 2. Hero Search Card: WHERE DO YOU WANT TO GO? */}
+      <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-sky-500/40 bg-slate-950/95 space-y-4 shadow-2xl">
+        <h2 className="font-extrabold text-lg sm:text-xl text-slate-100 tracking-tight">
+          Where do you want to go?
+        </h2>
+
+        <form onSubmit={handleFindMyWay} className="space-y-3">
+          {/* FROM */}
+          <div>
+            <label className="text-[10px] font-mono uppercase text-slate-400 font-bold block mb-1">
+              FROM
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
+              <input
+                type="text"
+                value={originText}
+                onChange={(e) => setOriginText(e.target.value)}
+                className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl pl-10 pr-3 py-3 text-xs text-slate-200 font-semibold focus:outline-none focus:border-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* TO */}
+          <div>
+            <label className="text-[10px] font-mono uppercase text-slate-400 font-bold block mb-1">
+              TO
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                value={destinationQuery}
+                onChange={(e) => setDestinationQuery(e.target.value)}
+                placeholder="Search destination (e.g. Pondicherry, Marina Beach)..."
+                className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl pl-10 pr-3 py-3 text-xs text-slate-100 font-semibold focus:outline-none focus:border-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* FIND MY WAY CTA */}
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+          >
+            <Navigation className="w-5 h-5 text-white transform -rotate-45" />
+            <span>{isSearching ? 'FINDING THE BEST WAY...' : 'FIND MY WAY'}</span>
+          </button>
+        </form>
+      </div>
+
+      {/* 3. Maximum 4 Quick Actions */}
+      <div className="grid grid-cols-4 gap-2">
         <button
           onClick={() => setActiveTab('explore')}
-          className="bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-sky-500/40 p-3.5 rounded-2xl flex items-center gap-3 text-left transition-all group"
+          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 group-hover:scale-105 transition-transform">
-            <Compass className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform">
+            <Compass className="w-4.5 h-4.5" />
           </div>
-          <div>
-            <h3 className="font-extrabold text-xs text-slate-200">Find Routes</h3>
-            <p className="text-[10px] text-slate-400">Step-by-step</p>
-          </div>
+          <span className="text-[10px] font-bold text-slate-300">Nearby</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('record')}
-          className="bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 p-3.5 rounded-2xl flex items-center gap-3 text-left transition-all group"
+          onClick={() => setActiveTab('trips')}
+          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
-            <Radio className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+            <Activity className="w-4.5 h-4.5" />
           </div>
-          <div>
-            <h3 className="font-extrabold text-xs text-slate-200">Record Trip</h3>
-            <p className="text-[10px] text-slate-400">Share your path</p>
-          </div>
+          <span className="text-[10px] font-bold text-slate-300">My Trips</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('safe')}
-          className="bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/40 p-3.5 rounded-2xl flex items-center gap-3 text-left transition-all group"
+          onClick={() => setActiveTab('trips')}
+          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+            <Bookmark className="w-4.5 h-4.5" />
           </div>
-          <div>
-            <h3 className="font-extrabold text-xs text-slate-200">Safe Mode</h3>
-            <p className="text-[10px] text-slate-400">Live contact SOS</p>
-          </div>
+          <span className="text-[10px] font-bold text-slate-300">Saved</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('stays')}
-          className="bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 p-3.5 rounded-2xl flex items-center gap-3 text-left transition-all group"
+          onClick={() => setActiveTab('explore')}
+          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
-            <Building2 className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+            <Radio className="w-4.5 h-4.5" />
           </div>
-          <div>
-            <h3 className="font-extrabold text-xs text-slate-200">Budget Stays</h3>
-            <p className="text-[10px] text-slate-400">Student hostels</p>
-          </div>
+          <span className="text-[10px] font-bold text-slate-300">Record</span>
         </button>
-      </section>
+      </div>
 
-      {/* 3. Verified Transit Routes Showcase (Horizontal Swipe Cards) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="font-extrabold text-sm sm:text-base text-slate-100">
-              POPULAR TRANSIT ROUTES
-            </h2>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-mono font-bold">
-              VERIFIED
-            </span>
+      {/* 4. Active Journey Banner (Only if active) */}
+      {activeRecording && (
+        <div className="bg-emerald-950/60 border border-emerald-500/40 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <div>
+              <span className="text-[10px] font-mono uppercase font-bold text-emerald-300 block">
+                JOURNEY IN PROGRESS
+              </span>
+              <h4 className="font-extrabold text-xs text-slate-100">
+                Recording path ({Math.round(activeRecording.distance_meters / 1000 * 10) / 10} km)
+              </h4>
+            </div>
           </div>
-
           <button
             onClick={() => setActiveTab('explore')}
-            className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-extrabold text-xs shadow-md shrink-0 cursor-pointer"
+          >
+            Open Live Map
+          </button>
+        </div>
+      )}
+
+      {/* 5. Routes Travellers Recommend (With Route Health Badges) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-extrabold text-sm text-slate-200">
+            Routes travellers recommend
+          </h3>
+          <button
+            onClick={() => setActiveTab('explore')}
+            className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 cursor-pointer"
           >
             <span>See All</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Horizontal Swipe Carousel */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
-          {routes.map((route) => {
-            const isSelected = currentRoute.id === route.id;
+        <div className="space-y-3">
+          {routes.slice(0, 3).map((route) => {
+            const health = getRouteHealthBadge(route.confidence_score);
+
             return (
               <div
                 key={route.id}
-                onClick={() => setSelectedRoute(route)}
-                className={`snap-start shrink-0 w-72 p-4 rounded-2xl border transition-all cursor-pointer space-y-2.5 ${
-                  isSelected 
-                    ? 'glass-panel border-sky-500 bg-slate-900/90 shadow-xl ring-1 ring-sky-500/30' 
-                    : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
-                }`}
+                onClick={() => {
+                  setSelectedRoute(route);
+                  onStartRoute(route);
+                }}
+                className="bg-slate-950/90 hover:bg-slate-900/90 border border-slate-800 hover:border-sky-500/50 p-4 rounded-2xl space-y-2.5 transition-all cursor-pointer shadow-lg group"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded font-mono font-bold">
-                    {route.category}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  {/* Route Health Badge */}
+                  <div className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${health.bg} ${health.text} ${health.border}`}>
+                    {health.icon}
+                    <span>{health.label}</span>
+                  </div>
+
                   <span className="text-xs font-mono font-bold text-emerald-400">
-                    ₹{route.total_cost_inr} • {route.total_duration_minutes} mins
+                    ₹{route.total_cost_inr} • {route.total_duration_minutes}m
                   </span>
                 </div>
 
-                <h3 className="font-extrabold text-sm text-slate-100 truncate">
-                  {route.title}
-                </h3>
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-100 group-hover:text-sky-300 transition-colors">
+                    {route.title}
+                  </h4>
+                  <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                    {route.tagline}
+                  </p>
+                </div>
 
-                <p className="text-xs text-slate-400 line-clamp-1">
-                  {route.tagline}
-                </p>
-
-                <div className="flex items-center justify-between pt-1 border-t border-slate-900 text-xs">
-                  <span className="text-[10px] text-slate-400 font-mono">{route.successful_completions_count} travellers followed</span>
-                  <span className="text-xs font-bold text-sky-400 flex items-center gap-0.5">
-                    <span>Select Map</span>
-                    <ArrowRight className="w-3 h-3" />
+                <div className="flex items-center justify-between pt-1 text-xs text-slate-400 border-t border-slate-900">
+                  <span className="text-[11px] font-mono">{route.successful_completions_count} travellers used this</span>
+                  <span className="font-bold text-sky-400 flex items-center gap-1">
+                    <span>View route</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
-
-      {/* 4. Live Map Polyline Card */}
-      <section className="glass-panel p-4 rounded-3xl border border-slate-800 space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-extrabold text-slate-200 flex items-center gap-1.5 truncate">
-            <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
-            <span className="truncate">{currentRoute.title}</span>
-          </span>
-          <button
-            onClick={() => setActiveTab('explore')}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shrink-0 cursor-pointer"
-          >
-            Start Route Guide
-          </button>
-        </div>
-        <MapView route={currentRoute} heightClass="h-[260px] sm:h-[320px]" />
-      </section>
+      </div>
 
     </div>
   );
