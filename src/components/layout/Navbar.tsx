@@ -1,7 +1,6 @@
 import React from 'react';
-import { Navigation, LogOut, UserCheck, Users, Bus } from 'lucide-react';
+import { Navigation, LogOut, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useJourney } from '../../context/JourneyContext';
 import { LoginPage } from '../auth/LoginPage';
 
 interface NavbarProps {
@@ -11,11 +10,6 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const { user, isAuthModalOpen, openAuthModal, closeAuthModal, signOutUser } = useAuth();
-  const { pendingDeveloperRoutes } = useJourney();
-
-  const isAdmin = user?.role === 'admin' || user?.email === 'karthikeyakavarapu@gmail.com' || user?.email === 'karthikakavarapuu@gmail.com';
-  const isOperator = user?.role === 'operator' || isAdmin;
-  const isDeveloper = user?.role === 'developer';
 
   return (
     <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80 px-3 sm:px-6 py-2.5 bg-slate-950/90 backdrop-blur-xl">
@@ -74,32 +68,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           </button>
 
           <button
-            onClick={() => setActiveTab('groups')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-              activeTab === 'groups' 
-                ? 'bg-indigo-500 text-white shadow-md' 
-                : 'text-indigo-400 hover:bg-slate-800/50'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Group Travel</span>
-          </button>
-
-          {isOperator && (
-            <button
-              onClick={() => setActiveTab('operator')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-                activeTab === 'operator' 
-                  ? 'bg-purple-500 text-white shadow-md' 
-                  : 'text-purple-400 hover:bg-slate-800/50'
-              }`}
-            >
-              <Bus className="w-3.5 h-3.5" />
-              <span>Operator Portal</span>
-            </button>
-          )}
-
-          <button
             onClick={() => setActiveTab('profile')}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'profile' 
@@ -109,39 +77,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           >
             Profile
           </button>
-
-          {/* ADMIN LINK: Shown ONLY to authorized admins */}
-          {isAdmin && (
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'admin' 
-                  ? 'bg-amber-500 text-white shadow-md' 
-                  : 'text-amber-400 hover:bg-slate-800/50'
-              }`}
-            >
-              <span>Admin Queue</span>
-              {pendingDeveloperRoutes.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {pendingDeveloperRoutes.length}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* DEVELOPER LINK: Shown ONLY if user.role === 'developer' */}
-          {isDeveloper && (
-            <button
-              onClick={() => setActiveTab('developer')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === 'developer' 
-                  ? 'bg-purple-500 text-white shadow-md' 
-                  : 'text-purple-400 hover:bg-slate-800/50'
-              }`}
-            >
-              Dev Console
-            </button>
-          )}
         </nav>
 
         {/* User Identity & Auth Control */}
