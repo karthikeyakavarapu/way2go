@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, AlertTriangle, PhoneCall, Radio, Users, CheckCircle2, HeartHandshake } from 'lucide-react';
 import { SOSService } from '../lib/sosService';
 import { useAuth } from '../context/AuthContext';
+import { RoadIncidentAlerts } from '../components/safety/RoadIncidentAlerts';
 import type { SOSHelpRequest } from '../types';
 
 export const SafetySOSPage: React.FC = () => {
@@ -35,7 +36,10 @@ export const SafetySOSPage: React.FC = () => {
   return (
     <div className="space-y-6 py-4 max-w-xl mx-auto">
       
-      {/* Header & Live Location Sharing Toggle Card */}
+      {/* 1. Road Safety, Accident Alert & Scam Prevention Radar */}
+      <RoadIncidentAlerts />
+
+      {/* 2. Header & Live Location Sharing Toggle Card */}
       <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-rose-500/40 bg-slate-950 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

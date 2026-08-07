@@ -17,6 +17,9 @@ import { GovPortal } from './pages/GovPortal';
 import { TravelPassportView } from './components/passport/TravelPassportView';
 import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
+import { RapidoCompanion } from './components/companion/RapidoCompanion';
+import { AITravelAssistant } from './components/ai/AITravelAssistant';
+import { PermissionPromptModal } from './components/common/PermissionPromptModal';
 import { AdminRoute, DeveloperRoute, ProtectedRoute } from './components/auth/ProtectedRoutes';
 import type { RouteGuide } from './types';
 
@@ -25,8 +28,6 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('home');
 
   const currentRoute = selectedRoute || routes[0];
-
-  // Direct access to main Rapido/Chalo transit UI for all visitors instantly
 
   const handleStartRoute = (route: RouteGuide) => {
     setSelectedRoute(route);
@@ -46,6 +47,14 @@ const AppContent: React.FC = () => {
       case 'explore':
       case 'reels':
         return <Discover />;
+
+      case 'companion':
+        return (
+          <RapidoCompanion 
+            route={currentRoute} 
+            onClose={() => setActiveTab('home')} 
+          />
+        );
 
       case 'gov-hub':
         return <GovPortal />;
@@ -113,11 +122,14 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col justify-between font-sans selection:bg-sky-500 selection:text-white">
       <div>
         <OfflineSyncBanner />
+        <PermissionPromptModal />
         <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 pb-24 md:pb-8">
           {renderActivePage()}
         </main>
       </div>
+
+      <AITravelAssistant />
 
       <div>
         <Footer />
