@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { JourneyProvider, useJourney } from './context/JourneyContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -16,22 +16,16 @@ import { SafetySOSPage } from './pages/SafetySOSPage';
 import { TravelPassportView } from './components/passport/TravelPassportView';
 import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
-import { LandingGate } from './components/auth/LandingGate';
 import { AdminRoute, DeveloperRoute, ProtectedRoute } from './components/auth/ProtectedRoutes';
 import type { RouteGuide } from './types';
 
 const AppContent: React.FC = () => {
-  const { user } = useAuth();
   const { selectedRoute, setSelectedRoute, routes } = useJourney();
-  const [hasUnlockedGate, setHasUnlockedGate] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('home');
 
   const currentRoute = selectedRoute || routes[0];
 
-  // If user has not unlocked gate and is not logged in, show LandingGate first
-  if (!user && !hasUnlockedGate) {
-    return <LandingGate onUnlock={() => setHasUnlockedGate(true)} />;
-  }
+  // Direct access to main Rapido/Chalo transit UI for all visitors instantly
 
   const handleStartRoute = (route: RouteGuide) => {
     setSelectedRoute(route);
