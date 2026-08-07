@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigation, LogOut, UserCheck } from 'lucide-react';
+import { Navigation, LogOut, UserCheck, Utensils, ShieldCheck, Briefcase, Compass, Home, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPage } from '../auth/LoginPage';
 
@@ -32,50 +32,78 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Desktop Primary Nav (HIDDEN ON MOBILE - BottomNav handles mobile) */}
+        {/* Desktop Primary Nav — 100% Locked & Identical Across Desktop & Mobile */}
         <nav className="hidden md:flex items-center gap-1 bg-slate-900/80 p-1 rounded-full border border-slate-800">
           <button
             onClick={() => setActiveTab('home')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'home' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            Home
+            <Home className="w-3.5 h-3.5" />
+            <span>Home</span>
           </button>
 
           <button
             onClick={() => setActiveTab('explore')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'explore' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            Explore
+            <Compass className="w-3.5 h-3.5" />
+            <span>Explore</span>
           </button>
 
           <button
             onClick={() => setActiveTab('trips')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'trips' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            Trips
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Trips</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('eat-stay')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'eat-stay' 
+                ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Utensils className="w-3.5 h-3.5" />
+            <span>Eat & Stay</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('safety-sos')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'safety-sos' 
+                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' 
+                : 'text-rose-400 hover:bg-slate-800/50'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Help/SOS</span>
           </button>
 
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'profile' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            Profile
+            <User className="w-3.5 h-3.5" />
+            <span>Profile</span>
           </button>
         </nav>
 
@@ -83,32 +111,29 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
         <div className="flex items-center gap-2">
           {user ? (
             <div className="flex items-center gap-2">
+              <img
+                src={user.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250"}
+                alt={user.full_name || 'User'}
+                className="w-8 h-8 rounded-full border border-sky-400 object-cover"
+              />
+              <span className="hidden sm:inline font-bold text-xs text-slate-200">
+                {user.full_name?.split(' ')[0]}
+              </span>
               <button
                 onClick={signOutUser}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-extrabold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                className="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
                 title="Sign Out"
               >
-                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Sign Out</span>
               </button>
-
-              <div 
-                onClick={() => setActiveTab('profile')}
-                className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
-              >
-                <img 
-                  src={user.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250"}
-                  alt={user.full_name}
-                  className="w-8 h-8 rounded-full border border-sky-400/40 object-cover"
-                />
-              </div>
             </div>
           ) : (
             <button
               onClick={openAuthModal}
-              className="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-extrabold text-xs flex items-center gap-1 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-md shadow-sky-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <UserCheck className="w-3.5 h-3.5 text-sky-400" />
+              <UserCheck className="w-4 h-4" />
               <span>Sign In</span>
             </button>
           )}
@@ -116,6 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
       </div>
 
+      {/* Auth Modal */}
       {isAuthModalOpen && (
         <LoginPage onClose={closeAuthModal} />
       )}
