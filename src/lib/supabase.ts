@@ -9,6 +9,9 @@ export const isSupabaseConfigured = true;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+const CACHE_VERSION_KEY = 'way2go_cache_version';
+const CURRENT_CACHE_VERSION = 'v2026_08_07_v3';
+
 const STORAGE_KEYS = {
   ROUTES: 'way2go_routes_db',
   STAYS: 'way2go_stays_db',
@@ -21,7 +24,18 @@ const STORAGE_KEYS = {
   TRANSIT_GAPS: 'way2go_transit_gaps_db',
 };
 
+/**
+ * Cache Busting Storage Initialization:
+ * Clears old stale localStorage caches if cache version changes.
+ */
 export const initializeLocalStorage = () => {
+  const version = localStorage.getItem(CACHE_VERSION_KEY);
+  if (version !== CURRENT_CACHE_VERSION) {
+    // Clear stale old storage keys
+    Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
+  }
+
   if (!localStorage.getItem(STORAGE_KEYS.ROUTES)) {
     localStorage.setItem(STORAGE_KEYS.ROUTES, JSON.stringify(INITIAL_ROUTES));
   }
@@ -58,7 +72,6 @@ export const getLocalRoutes = (): RouteGuide[] => {
     const raw = localStorage.getItem(STORAGE_KEYS.ROUTES);
     return raw ? JSON.parse(raw) : INITIAL_ROUTES;
   } catch (err) {
-    console.warn('Failed to parse local routes, falling back to seed', err);
     return INITIAL_ROUTES;
   }
 };
@@ -73,6 +86,19 @@ export const saveLocalRoute = (newRoute: RouteGuide): RouteGuide => {
   }
   localStorage.setItem(STORAGE_KEYS.ROUTES, JSON.stringify(routes));
   return newRoute;
+};
+
+export const getLocalGovReports = (): GovInfraReport[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GOV_REPORTS);
+    return raw ? JSON.parse(raw) : INITIAL_GOV_REPORTS;
+  } catch (err) {
+    return INITIAL_GOV_REPORTS;
+  }
+};
+
+export const saveLocalGovReports = (reports: GovInfraReport[]) => {
+  localStorage.setItem(STORAGE_KEYS.GOV_REPORTS, JSON.stringify(reports));
 };
 
 export const getLocalStays = (): BudgetStay[] => {
@@ -93,10 +119,6 @@ export const getLocalPassport = (): TravelPassport => {
   }
 };
 
-export const saveLocalPassport = (passport: TravelPassport) => {
-  localStorage.setItem(STORAGE_KEYS.PASSPORT, JSON.stringify(passport));
-};
-
 export const getLocalAnalytics = (): SystemAnalytics => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.ANALYTICS);
@@ -104,26 +126,6 @@ export const getLocalAnalytics = (): SystemAnalytics => {
   } catch (err) {
     return INITIAL_SYSTEM_ANALYTICS;
   }
-};
-
-export const updateLocalAnalytics = (delta: Partial<SystemAnalytics>) => {
-  const current = getLocalAnalytics();
-  const updated = { ...current, ...delta };
-  localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(updated));
-  return updated;
-};
-
-export const getLocalGovReports = (): GovInfraReport[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.GOV_REPORTS);
-    return raw ? JSON.parse(raw) : INITIAL_GOV_REPORTS;
-  } catch (err) {
-    return INITIAL_GOV_REPORTS;
-  }
-};
-
-export const saveLocalGovReports = (reports: GovInfraReport[]) => {
-  localStorage.setItem(STORAGE_KEYS.GOV_REPORTS, JSON.stringify(reports));
 };
 
 export const getLocalTransitGaps = (): TransitPlanningGap[] => {

@@ -36,7 +36,7 @@ export const StaysPage: React.FC = () => {
             Verified Accommodation Listings ({stays.length})
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {stays.map(stay => (
+            {stays.map((stay: any) => (
               <BudgetStayCard key={stay.id} stay={stay} />
             ))}
           </div>

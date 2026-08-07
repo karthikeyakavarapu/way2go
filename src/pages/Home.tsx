@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Navigation, Radio, Compass, Bookmark, ArrowRight, Activity, CheckCircle2, AlertTriangle, XCircle, Users, Plus } from 'lucide-react';
+import { Search, MapPin, Navigation, Compass, Utensils, Building, Video, Users, ArrowRight } from 'lucide-react';
 import { useJourney } from '../context/JourneyContext';
 import { useAuth } from '../context/AuthContext';
 import { PlaceResolutionService } from '../lib/placeResolution';
 import { RouteComparisonService } from '../lib/routeComparison';
-import { RouteComparisonCard } from '../components/discovery/RouteComparisonCard';
+import { RouteResultView } from '../components/discovery/RouteResultView';
 import { SimpleRouteBuilder } from '../components/route/SimpleRouteBuilder';
 import type { RouteGuide, RouteComparisonResult } from '../types';
 
@@ -99,33 +99,20 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
     }
   };
 
-  const getRouteHealthBadge = (score: number): { label: string; bg: string; text: string; border: string; icon: React.ReactNode } => {
-    if (score >= 85) {
-      return {
-        label: 'WORKING WELL',
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-400',
-        border: 'border-emerald-500/30',
-        icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-      };
-    }
-    if (score >= 65) {
-      return {
-        label: 'MAY HAVE CHANGES',
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-400',
-        border: 'border-amber-500/30',
-        icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-      };
-    }
-    return {
-      label: 'REPORTED PROBLEM',
-      bg: 'bg-rose-500/10',
-      text: 'text-rose-400',
-      border: 'border-rose-500/30',
-      icon: <XCircle className="w-3.5 h-3.5 text-rose-400" />
-    };
-  };
+  // If user searched, show post-search Route Result View
+  if (activeComparison) {
+    return (
+      <RouteResultView
+        comparison={activeComparison}
+        onBack={() => setActiveComparison(null)}
+        onStartJourney={onStartRoute}
+        onRecordRoute={() => {
+          setActiveComparison(null);
+          setShowSimpleRouteBuilder(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 py-4 max-w-xl mx-auto">
@@ -137,7 +124,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
             {getGreeting()} 👋
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            {user?.full_name ? `Welcome back, ${user.full_name.split(' ')[0]}` : 'Ready to travel today?'}
+            {user?.full_name ? `Welcome, ${user.full_name.split(' ')[0]}` : 'Ready to travel today?'}
           </p>
         </div>
 
@@ -145,12 +132,11 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
           onClick={() => setShowSimpleRouteBuilder(true)}
           className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-sky-500/25 flex items-center gap-1.5 cursor-pointer shrink-0"
         >
-          <Plus className="w-4 h-4" />
           <span>+ ADD ROUTE</span>
         </button>
       </div>
 
-      {/* 2. Hero Search Card: WHERE DO YOU WANT TO GO? */}
+      {/* 2. Primary Mobile Hero Card: WHERE DO YOU WANT TO GO? */}
       <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-sky-500/40 bg-slate-950/95 space-y-4 shadow-2xl">
         <h2 className="font-extrabold text-lg sm:text-xl text-slate-100 tracking-tight">
           Where do you want to go?
@@ -197,64 +183,61 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
           >
             <Navigation className="w-5 h-5 text-white transform -rotate-45" />
-            <span>{isSearching ? 'COMPARING MAP & TRAVELLER ROUTES...' : 'FIND MY WAY'}</span>
+            <span>{isSearching ? 'FINDING THE REAL WAY...' : 'FIND MY WAY'}</span>
           </button>
         </form>
       </div>
 
-      {/* 3. Deterministic Route Comparison Output (If user searched) */}
-      {activeComparison && (
-        <RouteComparisonCard
-          comparison={activeComparison}
-          onStartRoute={() => onStartRoute(activeComparison.mapRoute)}
-          onRecordRoute={() => setShowSimpleRouteBuilder(true)}
-        />
-      )}
+      {/* 3. Secondary Options Bar: Explore Nearby (5 Icons) */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wide">
+          EXPLORE NEARBY
+        </h3>
 
-      {/* 4. Maximum 4 Quick Actions */}
-      <div className="grid grid-cols-4 gap-2">
-        <button
-          onClick={() => setActiveTab('explore')}
-          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform">
-            <Compass className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-300">Nearby</span>
-        </button>
+        <div className="grid grid-cols-5 gap-1.5 text-xs">
+          <button
+            onClick={() => setActiveTab('explore')}
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex flex-col items-center gap-1 font-bold text-slate-300 cursor-pointer"
+          >
+            <Compass className="w-4 h-4 text-sky-400" />
+            <span className="text-[10px]">Nearby</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('trips')}
-          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
-            <Activity className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-300">My Trips</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('eat-stay')}
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex flex-col items-center gap-1 font-bold text-slate-300 cursor-pointer"
+          >
+            <Utensils className="w-4 h-4 text-amber-400" />
+            <span className="text-[10px]">Eat</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('trips')}
-          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
-            <Bookmark className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-300">Saved</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('eat-stay')}
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex flex-col items-center gap-1 font-bold text-slate-300 cursor-pointer"
+          >
+            <Building className="w-4 h-4 text-indigo-400" />
+            <span className="text-[10px]">Stay</span>
+          </button>
 
-        <button
-          onClick={() => setShowSimpleRouteBuilder(true)}
-          className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-            <Radio className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-300">+ Route</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('eat-stay')}
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex flex-col items-center gap-1 font-bold text-slate-300 cursor-pointer"
+          >
+            <MapPin className="w-4 h-4 text-emerald-400" />
+            <span className="text-[10px]">Visit</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('explore')}
+            className="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex flex-col items-center gap-1 font-bold text-slate-300 cursor-pointer"
+          >
+            <Video className="w-4 h-4 text-purple-400" />
+            <span className="text-[10px]">Reels</span>
+          </button>
+        </div>
       </div>
 
-      {/* 5. Group Travel Option Card */}
+      {/* 4. Group Travel Option Card */}
       <div 
         onClick={() => setActiveTab('groups')}
         className="glass-panel p-4 rounded-3xl border border-indigo-500/40 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/60 flex items-center justify-between gap-3 shadow-xl cursor-pointer hover:border-indigo-400 transition-all group"
@@ -268,7 +251,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
               GO TOGETHER & SAVE
             </span>
             <h4 className="font-extrabold text-xs sm:text-sm text-slate-100">
-              Going somewhere with a group?
+              Travelling with a group?
             </h4>
             <p className="text-[11px] text-slate-400">
               Book 20-35 seat buses & vans with verified operators.
@@ -282,7 +265,7 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
         </div>
       </div>
 
-      {/* 6. Simple Route Builder Modal */}
+      {/* 5. Simple Route Builder Modal */}
       {showSimpleRouteBuilder && (
         <SimpleRouteBuilder
           onClose={() => setShowSimpleRouteBuilder(false)}
@@ -292,67 +275,6 @@ export const Home: React.FC<HomeProps> = ({ setActiveTab, onStartRoute }) => {
           }}
         />
       )}
-
-      {/* 7. Routes Travellers Recommend (With Route Health Badges) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-extrabold text-sm text-slate-200">
-            Routes travellers recommend
-          </h3>
-          <button
-            onClick={() => setActiveTab('explore')}
-            className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 cursor-pointer"
-          >
-            <span>See All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {routes.slice(0, 3).map((route) => {
-            const health = getRouteHealthBadge(route.confidence_score);
-
-            return (
-              <div
-                key={route.id}
-                onClick={() => {
-                  setSelectedRoute(route);
-                  onStartRoute(route);
-                }}
-                className="bg-slate-950/90 hover:bg-slate-900/90 border border-slate-800 hover:border-sky-500/50 p-4 rounded-2xl space-y-2.5 transition-all cursor-pointer shadow-lg group"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className={`px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${health.bg} ${health.text} ${health.border}`}>
-                    {health.icon}
-                    <span>{health.label}</span>
-                  </div>
-
-                  <span className="text-xs font-mono font-bold text-emerald-400">
-                    ₹{route.total_cost_inr} • {route.total_duration_minutes}m
-                  </span>
-                </div>
-
-                <div>
-                  <h4 className="font-extrabold text-sm text-slate-100 group-hover:text-sky-300 transition-colors">
-                    {route.title}
-                  </h4>
-                  <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
-                    {route.tagline}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-1 text-xs text-slate-400 border-t border-slate-900">
-                  <span className="text-[11px] font-mono">{route.successful_completions_count} travellers used this</span>
-                  <span className="font-bold text-sky-400 flex items-center gap-1">
-                    <span>View route</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
     </div>
   );

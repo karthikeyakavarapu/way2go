@@ -29,9 +29,9 @@ export const INITIAL_ROUTES: RouteGuide[] = [
     total_duration_minutes: 48,
     total_cost_inr: 35,
     confidence_score: 94,
-    last_verified_at: '2 hours ago',
-    successful_completions_count: 126,
-    recent_confirmations_count: 8,
+    last_verified_at: 'Recently verified',
+    successful_completions_count: 3,
+    recent_confirmations_count: 3,
     difficulty_level: 'Beginner',
     category: 'Beginner Friendly',
     tags: ['Student Budget', 'Beach', 'Bus + Walk', 'Verified Steps'],
@@ -44,7 +44,7 @@ export const INITIAL_ROUTES: RouteGuide[] = [
     updated_at: '2026-08-04T10:30:00Z',
     is_published: true,
     is_featured: true,
-    primary_source_label: 'SOURCE: Community Verified by 126 Travellers',
+    primary_source_label: 'SOURCE: Community Verified by 3 Travellers',
     segments: [
       {
         id: 'seg-1',
@@ -59,7 +59,7 @@ export const INITIAL_ROUTES: RouteGuide[] = [
         estimated_minutes: 3,
         estimated_cost_inr: 0,
         source_type: 'community_verified',
-        source_label: 'SOURCE: Community Verified by 126 Travellers',
+        source_label: 'SOURCE: Community Verified by 3 Travellers',
         polyline_coords: [
           { lat: 13.0336, lng: 80.1802 },
           { lat: 13.0342, lng: 80.1810 },
