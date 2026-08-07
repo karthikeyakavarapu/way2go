@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Heart, MapPin, Compass, Plus, MessageCircle, Navigation, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Heart, MapPin, Compass, Plus, MessageCircle, Navigation, Loader2, Play, Volume2, VolumeX } from 'lucide-react';
 import { TravelReelsService } from '../../lib/reels';
 import type { TravelReel } from '../../types';
 
@@ -14,11 +14,17 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string | null>(null);
+  
+  // Video playback controls
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     setReels(TravelReelsService.getReels(city));
     setActiveReelIndex(0);
+    setIsPlaying(true);
   };
 
   const handleTrackLocation = () => {
@@ -35,7 +41,6 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
       (pos) => {
         const { latitude, longitude } = pos.coords;
         
-        // Simple bounding box resolution for Southern India cities
         let detectedCity = 'Chennai';
         if (latitude > 17.0) {
           detectedCity = 'Hyderabad';
@@ -49,7 +54,7 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
         setReels(TravelReelsService.getReels(detectedCity));
         setActiveReelIndex(0);
         setIsLocating(false);
-        setLocationStatus(`📍 Detected location: ${detectedCity} (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`);
+        setLocationStatus(`📍 Detected location: ${detectedCity}`);
         setTimeout(() => setLocationStatus(null), 4000);
       },
       (err) => {
@@ -62,6 +67,25 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
       },
       { timeout: 8000 }
     );
+  };
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play().catch(console.warn);
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
   };
 
   const handleLikeReel = (reelId: string) => {
@@ -133,21 +157,48 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
 
       {/* Reel Vertical Player Container */}
       {currentReel ? (
-        <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl h-[520px] sm:h-[580px] flex flex-col justify-between p-4">
+        <div 
+          onClick={togglePlay}
+          className="relative rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl h-[520px] sm:h-[580px] flex flex-col justify-between p-4 cursor-pointer group"
+        >
           
           {/* Background Video Stream */}
           <video
+            ref={videoRef}
             src={currentReel.video_url}
             poster={currentReel.thumbnail_url}
             autoPlay
             loop
-            muted
+            muted={isMuted}
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0 opacity-85"
+            className="absolute inset-0 w-full h-full object-cover z-0 opacity-90"
+            onError={(e) => {
+              // Fallback to poster image if CDN video stream is blocked
+              (e.target as HTMLVideoElement).style.display = 'none';
+            }}
           />
 
-          {/* Top Gradient Overlay: Category & Creator */}
-          <div className="relative z-10 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-3 rounded-2xl">
+          {/* Fallback Image Poster if video fails */}
+          <img
+            src={currentReel.thumbnail_url}
+            alt={currentReel.title}
+            className="absolute inset-0 w-full h-full object-cover z-[-1]"
+          />
+
+          {/* Central Play/Pause Watermark when paused */}
+          {!isPlaying && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
+              <div className="w-16 h-16 rounded-full bg-sky-500/80 text-white flex items-center justify-center shadow-2xl animate-pulse">
+                <Play className="w-8 h-8 fill-current ml-1" />
+              </div>
+            </div>
+          )}
+
+          {/* Top Gradient Overlay: Category, Creator & Audio Toggle */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative z-10 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-3 rounded-2xl"
+          >
             <div className="flex items-center gap-2">
               <img
                 src={currentReel.creator_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'}
@@ -160,18 +211,30 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
               </div>
             </div>
 
-            <span className="text-[10px] font-mono font-bold bg-sky-500/30 text-sky-200 px-2 py-0.5 rounded border border-sky-400/40">
-              {currentReel.category}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleMute}
+                className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/80 cursor-pointer"
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-sky-400" />}
+              </button>
+
+              <span className="text-[10px] font-mono font-bold bg-sky-500/30 text-sky-200 px-2 py-0.5 rounded border border-sky-400/40">
+                {currentReel.category}
+              </span>
+            </div>
           </div>
 
           {/* Bottom Gradient Overlay: Caption, Map & Route Action Buttons */}
-          <div className="relative z-10 space-y-3 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 rounded-2xl">
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative z-10 space-y-3 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 rounded-2xl"
+          >
             <p className="text-xs font-bold text-slate-100 leading-snug">
               {currentReel.title}
             </p>
 
-            {/* Travel Action Buttons: VIEW ON MAP & VIEW ROUTE */}
+            {/* Travel Action Buttons */}
             <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 onClick={() => onStartRouteWithReel?.(currentReel.attached_route_id || 'route-srm-marina')}
@@ -182,7 +245,7 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
               </button>
 
               <button
-                onClick={() => alert(`Showing ${currentReel.location_name} on Leaflet Map!`)}
+                onClick={() => alert(`Showing ${currentReel.location_name} on Map!`)}
                 className="py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <MapPin className="w-4 h-4 text-emerald-400" />
@@ -210,14 +273,20 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
               <div className="flex gap-2">
                 <button
                   disabled={activeReelIndex === 0}
-                  onClick={() => setActiveReelIndex(prev => Math.max(0, prev - 1))}
+                  onClick={() => {
+                    setActiveReelIndex(prev => Math.max(0, prev - 1));
+                    setIsPlaying(true);
+                  }}
                   className="px-2.5 py-1 rounded-lg bg-slate-900/80 text-slate-300 border border-slate-700 text-[10px] font-bold disabled:opacity-40 cursor-pointer"
                 >
                   PREV
                 </button>
                 <button
                   disabled={activeReelIndex === reels.length - 1}
-                  onClick={() => setActiveReelIndex(prev => Math.min(reels.length - 1, prev + 1))}
+                  onClick={() => {
+                    setActiveReelIndex(prev => Math.min(reels.length - 1, prev + 1));
+                    setIsPlaying(true);
+                  }}
                   className="px-2.5 py-1 rounded-lg bg-slate-900/80 text-slate-300 border border-slate-700 text-[10px] font-bold disabled:opacity-40 cursor-pointer"
                 >
                   NEXT ➔

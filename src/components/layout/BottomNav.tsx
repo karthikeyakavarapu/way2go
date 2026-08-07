@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Briefcase, User, Navigation, Utensils, ShieldCheck, Video, Building2 } from 'lucide-react';
+import { Home, Briefcase, User, Navigation, Utensils, ShieldCheck, Video, Building2, Bus } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: string;
@@ -34,7 +34,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, o
           <span className="text-[9px]">Reels</span>
         </button>
 
-        {/* 3. GOV HUB */}
+        {/* 3. VEHICLES */}
+        <button
+          onClick={() => setActiveTab('vehicles')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'vehicles' ? 'text-amber-400 bg-amber-500/10 font-bold' : 'text-amber-400/80 hover:text-amber-300'
+          }`}
+        >
+          <Bus className="w-4 h-4" />
+          <span className="text-[9px]">Vehicles</span>
+        </button>
+
+        {/* 4. GOV HUB */}
         <button
           onClick={() => setActiveTab('gov-hub')}
           className={`flex flex-col items-center gap-0.5 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${

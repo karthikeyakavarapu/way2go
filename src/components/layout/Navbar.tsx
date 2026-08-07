@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigation, LogOut, UserCheck, Utensils, ShieldCheck, Briefcase, Compass, Home, User, Video, Building2 } from 'lucide-react';
+import { Navigation, LogOut, UserCheck, Utensils, ShieldCheck, Briefcase, Compass, Home, User, Video, Building2, Bus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPage } from '../auth/LoginPage';
 
@@ -68,6 +68,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           >
             <Video className="w-3.5 h-3.5" />
             <span>Reels</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('vehicles')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              activeTab === 'vehicles' 
+                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30' 
+                : 'text-amber-400 hover:bg-slate-800/50'
+            }`}
+          >
+            <Bus className="w-3.5 h-3.5" />
+            <span>Vehicles</span>
           </button>
 
           <button

@@ -14,6 +14,7 @@ import { DeveloperConsole } from './pages/DeveloperConsole';
 import { EatStayVisitPage } from './pages/EatStayVisitPage';
 import { SafetySOSPage } from './pages/SafetySOSPage';
 import { GovPortal } from './pages/GovPortal';
+import { TravelVehiclesPage } from './pages/TravelVehiclesPage';
 import { TravelPassportView } from './components/passport/TravelPassportView';
 import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
@@ -47,6 +48,9 @@ const AppContent: React.FC = () => {
       case 'explore':
       case 'reels':
         return <Discover />;
+
+      case 'vehicles':
+        return <TravelVehiclesPage />;
 
       case 'companion':
         return (
