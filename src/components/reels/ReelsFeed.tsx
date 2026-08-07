@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MapPin, Compass, Plus, MessageCircle } from 'lucide-react';
+import { Heart, MapPin, Compass, Plus, MessageCircle, Navigation, Loader2 } from 'lucide-react';
 import { TravelReelsService } from '../../lib/reels';
 import type { TravelReel } from '../../types';
 
@@ -12,11 +12,56 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
   const [selectedCity, setSelectedCity] = useState<string>('All');
   const [reels, setReels] = useState<TravelReel[]>(() => TravelReelsService.getReels(selectedCity));
   const [activeReelIndex, setActiveReelIndex] = useState(0);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     setReels(TravelReelsService.getReels(city));
     setActiveReelIndex(0);
+  };
+
+  const handleTrackLocation = () => {
+    setIsLocating(true);
+    setLocationStatus('Locating nearest city via GPS...');
+
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation not supported by browser');
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        
+        // Simple bounding box resolution for Southern India cities
+        let detectedCity = 'Chennai';
+        if (latitude > 17.0) {
+          detectedCity = 'Hyderabad';
+        } else if (latitude < 12.0 && longitude < 78.0) {
+          detectedCity = 'Bengaluru';
+        } else if (latitude < 12.5 && longitude > 79.5) {
+          detectedCity = 'Puducherry';
+        }
+
+        setSelectedCity(detectedCity);
+        setReels(TravelReelsService.getReels(detectedCity));
+        setActiveReelIndex(0);
+        setIsLocating(false);
+        setLocationStatus(`📍 Detected location: ${detectedCity} (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`);
+        setTimeout(() => setLocationStatus(null), 4000);
+      },
+      (err) => {
+        console.warn('Geolocation error', err);
+        setSelectedCity('Chennai');
+        setReels(TravelReelsService.getReels('Chennai'));
+        setIsLocating(false);
+        setLocationStatus('📍 Defaulted to Chennai reels');
+        setTimeout(() => setLocationStatus(null), 3000);
+      },
+      { timeout: 8000 }
+    );
   };
 
   const handleLikeReel = (reelId: string) => {
@@ -28,6 +73,39 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({ onStartRouteWithReel, onOp
   return (
     <div className="space-y-4 py-2 max-w-md mx-auto">
       
+      {/* Location Tracking Trigger Banner */}
+      <div className="bg-slate-900/90 p-3 rounded-2xl border border-sky-500/30 flex items-center justify-between gap-2 shadow-lg">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-500/30 text-sky-400 flex items-center justify-center shrink-0">
+            <Navigation className="w-4 h-4 transform -rotate-45" />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-xs text-slate-100">Location-Tracked Reels</h4>
+            <p className="text-[10px] text-slate-400 font-mono">Filter travel video guides near your GPS location</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTrackLocation}
+          disabled={isLocating}
+          className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-[11px] shadow-md flex items-center gap-1 cursor-pointer shrink-0"
+        >
+          {isLocating ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <MapPin className="w-3.5 h-3.5" />
+          )}
+          <span>{isLocating ? 'LOCATING...' : 'TRACK LOCATION'}</span>
+        </button>
+      </div>
+
+      {/* GPS Location Status Toast */}
+      {locationStatus && (
+        <div className="bg-sky-500/10 border border-sky-500/30 p-2.5 rounded-xl text-sky-300 text-xs font-mono font-bold text-center">
+          {locationStatus}
+        </div>
+      )}
+
       {/* City Location Switcher Header */}
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
         {['All', 'Chennai', 'Puducherry', 'Hyderabad', 'Bengaluru'].map(city => (
