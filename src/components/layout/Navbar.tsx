@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigation, LogOut, UserCheck, Utensils, ShieldCheck, Briefcase, Compass, Home, User } from 'lucide-react';
+import { Navigation, LogOut, UserCheck, Utensils, ShieldCheck, Briefcase, Compass, Home, User, Video, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LoginPage } from '../auth/LoginPage';
 
@@ -32,11 +32,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Desktop Primary Nav — 100% Locked & Identical Across Desktop & Mobile */}
+        {/* Desktop Primary Nav — 100% Locked & Identical Before & After Login */}
         <nav className="hidden md:flex items-center gap-1 bg-slate-900/80 p-1 rounded-full border border-slate-800">
           <button
             onClick={() => setActiveTab('home')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'home' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
           <button
             onClick={() => setActiveTab('explore')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'explore' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -59,8 +59,32 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           </button>
 
           <button
+            onClick={() => setActiveTab('reels')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              activeTab === 'reels' 
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30' 
+                : 'text-purple-400 hover:bg-slate-800/50'
+            }`}
+          >
+            <Video className="w-3.5 h-3.5" />
+            <span>Reels</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('gov-hub')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              activeTab === 'gov-hub' 
+                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' 
+                : 'text-emerald-400 hover:bg-slate-800/50'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Gov Hub</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('trips')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'trips' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -72,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
           <button
             onClick={() => setActiveTab('eat-stay')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'eat-stay' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -84,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
           <button
             onClick={() => setActiveTab('safety-sos')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'safety-sos' 
                 ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' 
                 : 'text-rose-400 hover:bg-slate-800/50'
@@ -96,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
               activeTab === 'profile' 
                 ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'

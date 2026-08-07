@@ -13,6 +13,7 @@ import { AdminPage } from './pages/AdminPage';
 import { DeveloperConsole } from './pages/DeveloperConsole';
 import { EatStayVisitPage } from './pages/EatStayVisitPage';
 import { SafetySOSPage } from './pages/SafetySOSPage';
+import { GovPortal } from './pages/GovPortal';
 import { TravelPassportView } from './components/passport/TravelPassportView';
 import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
@@ -43,7 +44,11 @@ const AppContent: React.FC = () => {
         );
 
       case 'explore':
+      case 'reels':
         return <Discover />;
+
+      case 'gov-hub':
+        return <GovPortal />;
 
       case 'trips':
         return (

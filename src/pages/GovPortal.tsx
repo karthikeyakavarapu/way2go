@@ -167,11 +167,79 @@ export const GovPortal: React.FC = () => {
 
         <button
           onClick={() => setShowSubmitModal(true)}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-extrabold text-xs shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-center transition-all"
+          className="px-5 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-extrabold text-xs shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-center transition-all cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
           <span>FILE INFRASTRUCTURE ISSUE</span>
         </button>
+      </div>
+
+      {/* Government Bus Booking & Direct Trip Head Contact Section */}
+      <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-emerald-500/40 bg-slate-950 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-3">
+          <div>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded border border-emerald-500/30 uppercase">
+              GOVT & GROUP BUS BOOKING
+            </span>
+            <h3 className="font-extrabold text-lg text-slate-100 mt-1">
+              Government / Authorized Group Bus Trips & Head Contacts
+            </h3>
+            <p className="text-xs text-slate-400 font-mono">
+              Direct connection for commuters, travellers, and municipal authorities to contact the Trip Head.
+            </p>
+          </div>
+
+          <a
+            href="tel:+919840100000"
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 cursor-pointer shrink-0 self-start sm:self-center"
+          >
+            <span>📞 CALL TRIP HEAD (+91 98401 00000)</span>
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-slate-200">Trip Head / Leader: Karthik Akavarapu</span>
+              <span className="text-[10px] font-mono text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/30">
+                ACTIVE TRIP HEAD
+              </span>
+            </div>
+            <p className="text-slate-400 leading-snug">
+              Route: SRM Ramapuram ➔ Puducherry Govt Bus Bay (35 Passengers, Aug 15)
+            </p>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] font-mono">
+              <span className="text-emerald-400 font-bold">Contact: +91 98401 00000</span>
+              <button
+                onClick={() => alert('Contacting Trip Head Karthik Akavarapu at +91 98401 00000 to join trip!')}
+                className="px-3 py-1 rounded-xl bg-sky-500 text-white font-bold cursor-pointer"
+              >
+                JOIN TRIP
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-slate-200">Trip Head / Leader: Priya Commuter</span>
+              <span className="text-[10px] font-mono text-purple-400 font-bold bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">
+                GOVT RECOGNIZED
+              </span>
+            </div>
+            <p className="text-slate-400 leading-snug">
+              Route: Guindy Metro ➔ Marina Beach Special Bus (25 Passengers, Aug 18)
+            </p>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] font-mono">
+              <span className="text-emerald-400 font-bold">Contact: +91 98402 88888</span>
+              <button
+                onClick={() => alert('Contacting Trip Head Priya Commuter at +91 98402 88888 to join trip!')}
+                className="px-3 py-1 rounded-xl bg-sky-500 text-white font-bold cursor-pointer"
+              >
+                JOIN TRIP
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Dashboard Grid */}
