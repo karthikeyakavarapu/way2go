@@ -126,7 +126,7 @@ export class AIService {
       };
     }
 
-    // 2. Realistic Distance-Aware Calculation for Custom Searches (Kashmir, Delhi, Pondicherry, etc.)
+    // 2. Realistic Distance-Aware Calculation for Custom Searches
     const originCoords: LatLng = { lat: 13.0336, lng: 80.1802 }; // SRM Ramapuram
     const destinationPlace = await PlaceResolutionService.resolvePlace(query);
     const destCoords: LatLng = destinationPlace.location;
@@ -138,7 +138,7 @@ export class AIService {
     let category = 'Local Urban Transit';
     let segments: any[] = [];
 
-    // Tier 1: Local Urban (< 35 km, e.g. Marina Beach, Guindy, Airport)
+    // TIER 1: Local Urban (< 35 km, e.g. Marina Beach, Guindy, Airport, IIT Madras)
     if (realDistKm < 35) {
       totalDurationMins = Math.max(30, Math.round(realDistKm * 2.5));
       totalFareINR = 35;
@@ -189,7 +189,7 @@ export class AIService {
         }
       ];
     }
-    // Tier 2: Regional Intercity (35 km to 350 km, e.g. Puducherry, Vellore, Tirupati)
+    // TIER 2: Regional Intercity (35 km to 350 km, e.g. Puducherry, Vellore, Tirupati)
     else if (realDistKm <= 350) {
       totalDurationMins = Math.round((realDistKm / 45) * 60) + 40; // ~45 km/h bus avg + transfer
       totalFareINR = Math.round(realDistKm * 1.2) + 30; // ₹1.2/km bus fare
@@ -200,7 +200,7 @@ export class AIService {
           id: 'seg-r-1',
           step_number: 1,
           transport_mode: 'metro',
-          title: 'Metro / Feeder Bus to Koyambedu CMBT Intercity Bus Terminal',
+          title: 'Metro / Feeder to Koyambedu CMBT Intercity Bus Terminal',
           instruction_full: 'Take Metro Blue/Green line to Koyambedu Bus Terminus (CMBT) for intercity coaches.',
           instruction_simplified: 'Metro ➔ Koyambedu CMBT Bus Stand.',
           start_location: originCoords,
@@ -221,7 +221,7 @@ export class AIService {
           end_location: destCoords,
           polyline_coords: [{ lat: 13.0694, lng: 80.1948 }, destCoords],
           distance_meters: Math.round(realDistKm * 1000),
-          estimated_minutes: totalDurationMins - 45,
+          estimated_minutes: totalDurationMins - 35,
           estimated_cost_inr: totalFareINR - 30
         },
         {
@@ -240,20 +240,71 @@ export class AIService {
         }
       ];
     }
-    // Tier 3: Long-Distance Interstate (> 350 km, e.g. Kashmir, Delhi, Mumbai, Kolkata, Hyderabad)
+    // TIER 3: Hill Stations & Regional Tourist Corridors (350 km to 700 km, e.g. Munnar, Ooty, Kodaikanal, Coimbatore, Madurai, Goa)
+    else if (realDistKm <= 700) {
+      totalDurationMins = Math.round((realDistKm / 45) * 60) + 90; // ~11 - 13 hours
+      totalFareINR = 850;
+      category = 'Overnight Express Train & Western Ghats Hill Bus';
+
+      segments = [
+        {
+          id: 'seg-h-1',
+          step_number: 1,
+          transport_mode: 'metro',
+          title: 'Metro from Guindy to Chennai Central (MAS) / Koyambedu CMBT',
+          instruction_full: 'Take Metro Blue Line to Chennai Central (MAS) or CMBT for overnight transit.',
+          instruction_simplified: 'Metro ➔ Chennai Central Railway Hub.',
+          start_location: originCoords,
+          end_location: { lat: 13.0827, lng: 80.2707 },
+          polyline_coords: [originCoords, { lat: 13.0827, lng: 80.2707 }],
+          distance_meters: 14200,
+          estimated_minutes: 45,
+          estimated_cost_inr: 40
+        },
+        {
+          id: 'seg-h-2',
+          step_number: 2,
+          transport_mode: 'train',
+          title: `Overnight Superfast Train / AC Sleeper Bus to Ernakulam / Theni Foothills`,
+          instruction_full: `Board overnight express train (e.g. Guruvayur / Alleppey Express) to Ernakulam Junction (ERS) or AC Sleeper Bus to Theni (Sleeper Ticket: ₹420 - ₹650).`,
+          instruction_simplified: `Overnight Train/Bus ➔ Foothills Transit Junction.`,
+          start_location: { lat: 13.0827, lng: 80.2707 },
+          end_location: { lat: 9.9816, lng: 76.2799 },
+          polyline_coords: [{ lat: 13.0827, lng: 80.2707 }, { lat: 9.9816, lng: 76.2799 }],
+          distance_meters: Math.round(realDistKm * 800),
+          estimated_minutes: totalDurationMins - 240,
+          estimated_cost_inr: 670
+        },
+        {
+          id: 'seg-h-3',
+          step_number: 3,
+          transport_mode: 'bus',
+          title: `KSRTC / TNSTC Hill Ghat Road Bus to ${destinationPlace.name}`,
+          instruction_full: `Board scenic mountain road bus climbing through Cheeyappara & tea estates to ${destinationPlace.name} Bus Stand (Fare: ₹140).`,
+          instruction_simplified: `Ghat Road Bus ➔ ${destinationPlace.name} Tea Gardens.`,
+          start_location: { lat: 9.9816, lng: 76.2799 },
+          end_location: destCoords,
+          polyline_coords: [{ lat: 9.9816, lng: 76.2799 }, destCoords],
+          distance_meters: Math.round(realDistKm * 200),
+          estimated_minutes: 195,
+          estimated_cost_inr: 140
+        }
+      ];
+    }
+    // TIER 4: Long-Distance Interstate (> 700 km, e.g. Kashmir, Delhi, Mumbai, Kolkata, Manali, Ladakh)
     else {
-      totalDurationMins = Math.round((realDistKm / 65) * 60) + 120; // Train transit (~40-48 hours for Kashmir)
-      totalFareINR = Math.max(1850, Math.round(realDistKm * 0.65)); // Superfast express train standard
-      category = 'Interstate Superfast Rail / Flight';
+      totalDurationMins = Math.round((realDistKm / 65) * 60) + 120; // ~40-44 hours for Kashmir
+      totalFareINR = Math.max(1850, Math.round(realDistKm * 0.65));
+      category = 'Interstate Superfast Rail / Air Corridor';
 
       segments = [
         {
           id: 'seg-l-1',
           step_number: 1,
           transport_mode: 'metro',
-          title: 'Metro from Guindy to Chennai Central (Puratchi Thalaivar Dr. MGR Central)',
-          instruction_full: 'Take Chennai Metro Blue Line directly to Chennai Central Railway Station (MAS) (Fare: ₹40).',
-          instruction_simplified: 'Metro ➔ Chennai Central Railway Station.',
+          title: 'Metro from Guindy to Chennai Central (MAS) / Airport (MAA)',
+          instruction_full: 'Take Chennai Metro Blue Line directly to Chennai Central Railway Station (MAS) or Airport.',
+          instruction_simplified: 'Metro ➔ Chennai Central Station.',
           start_location: originCoords,
           end_location: { lat: 13.0827, lng: 80.2707 },
           polyline_coords: [originCoords, { lat: 13.0827, lng: 80.2707 }],
@@ -279,7 +330,7 @@ export class AIService {
           id: 'seg-l-3',
           step_number: 3,
           transport_mode: 'bus',
-          title: `Local Transit / Shared Cab to ${destinationPlace.name}`,
+          title: `Local State Transit / Shared Cab to ${destinationPlace.name}`,
           instruction_full: `Take local state bus or shared cab from the main station / airport to ${destinationPlace.name}.`,
           instruction_simplified: `Shared cab / bus ➔ Arrive at ${destinationPlace.name}.`,
           start_location: destCoords,
@@ -362,4 +413,3 @@ export class AIService {
     return `An incredible journey from ${origin} to ${destination}! Covered in ${durationMins} minutes using ${modesUsed.join(' & ')} for a total of ₹${costINR}. Verified and recorded live on WAY2GO.`;
   }
 }
-
