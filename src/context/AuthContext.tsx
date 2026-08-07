@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { UserProfile, UserRole } from '../types';
-import { CURRENT_DEMO_USER } from '../data/seedData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface AuthContextType {
@@ -19,11 +18,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_EMAILS = ['karthikakavarapuu@gmail.com', 'karthikeyakavarapu@gmail.com'];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [role, setRoleState] = useState<UserRole>('traveller');
+  const [role, setRoleState] = useState<UserRole>('user');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -31,16 +28,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           const userEmail = session.user.email || 'user@way2go.in';
-          const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
 
           const authUser: UserProfile = {
             id: session.user.id,
             email: userEmail,
             full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Authenticated Traveller',
             avatar_url: session.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250',
-            role: isAdmin ? 'admin' : (session.user.user_metadata?.role || 'contributor'),
+            role: (session.user.user_metadata?.role as UserRole) || 'user',
             reputation_score: 98,
-            badge_title: isAdmin ? 'Lead Architect & Developer' : 'Verified Traveller',
+            badge_title: 'Verified Traveller',
             is_verified_guide: true,
             is_opted_in_helper: true,
             registered_city: session.user.user_metadata?.city || 'Chennai',
@@ -55,16 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
           const userEmail = session.user.email || 'user@way2go.in';
-          const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
 
           const authUser: UserProfile = {
             id: session.user.id,
             email: userEmail,
             full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Authenticated Traveller',
             avatar_url: session.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250',
-            role: isAdmin ? 'admin' : (session.user.user_metadata?.role || 'contributor'),
+            role: (session.user.user_metadata?.role as UserRole) || 'user',
             reputation_score: 98,
-            badge_title: isAdmin ? 'Lead Architect & Developer' : 'Verified Traveller',
+            badge_title: 'Verified Traveller',
             is_verified_guide: true,
             is_opted_in_helper: true,
             registered_city: session.user.user_metadata?.city || 'Chennai',
@@ -101,16 +96,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = (data: Partial<UserProfile>) => {
     const userEmail = data.email || 'user@way2go.in';
-    const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
 
     const newUser: UserProfile = {
       id: `user-${Date.now()}`,
       email: userEmail,
       full_name: data.full_name || 'New Traveller',
       avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250',
-      role: isAdmin ? 'admin' : (data.role || 'contributor'),
+      role: data.role || 'user',
       reputation_score: 98,
-      badge_title: isAdmin ? 'Lead Architect & Developer' : 'Registered Contributor',
+      badge_title: 'Verified Traveller',
       is_verified_guide: true,
       is_opted_in_helper: true,
       registered_city: data.registered_city || 'Chennai',
@@ -122,16 +116,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginUserWithGoogle = (googleData: { full_name: string; email: string; avatar_url: string }) => {
-    const isAdmin = ADMIN_EMAILS.includes(googleData.email.toLowerCase());
-
     const googleProfile: UserProfile = {
       id: `google-${Date.now()}`,
       email: googleData.email,
       full_name: googleData.full_name,
       avatar_url: googleData.avatar_url,
-      role: isAdmin ? 'admin' : 'contributor',
+      role: 'user',
       reputation_score: 98,
-      badge_title: isAdmin ? 'Lead Architect & Developer' : 'Google Verified Traveller',
+      badge_title: 'Google Verified Traveller',
       is_verified_guide: true,
       is_opted_in_helper: true,
       registered_city: 'Chennai',
@@ -143,16 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginUser = (email: string) => {
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-    if (isAdmin || !email) {
-      setUser({
-        ...CURRENT_DEMO_USER,
-        email: email || CURRENT_DEMO_USER.email
-      });
-      setRoleState('admin');
-    } else {
-      registerUser({ email, full_name: email.split('@')[0] || 'Registered Traveller' });
-    }
+    registerUser({ email: email || 'user@way2go.in', full_name: email ? email.split('@')[0] : 'Registered Traveller' });
   };
 
   const signOutUser = () => {
@@ -160,6 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabase.auth.signOut();
     }
     setUser(null);
+    setRoleState('user');
   };
 
   return (
