@@ -415,6 +415,46 @@ export interface RouteStepDraft {
   note?: string;
 }
 
+export interface EatStayVisit {
+  id: string;
+  destination_city: string;
+  type: 'eat' | 'stay' | 'visit';
+  title: string;
+  description: string;
+  price_tag: string;
+  rating: number;
+  location_name: string;
+  location_coords: LatLng;
+  photo_url: string;
+  room_sharing_available?: boolean;
+}
+
+export interface RoomSharingMatch {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_avatar?: string;
+  destination_city: string;
+  travel_dates: string;
+  budget_per_night_inr: number;
+  gender_preference?: string;
+  contact_phone: string;
+  status: 'active' | 'matched';
+  created_at: string;
+}
+
+export interface SOSHelpRequest {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_phone?: string;
+  location_name: string;
+  location_coords: LatLng;
+  message: string;
+  status: 'active' | 'resolved';
+  created_at: string;
+}
+
 export interface TransitPlanningGap {
   id: string;
   origin: string;

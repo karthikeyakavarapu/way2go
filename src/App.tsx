@@ -11,6 +11,8 @@ import { GroupTravelPage } from './pages/GroupTravelPage';
 import { OperatorPortal } from './pages/OperatorPortal';
 import { AdminPage } from './pages/AdminPage';
 import { DeveloperConsole } from './pages/DeveloperConsole';
+import { EatStayVisitPage } from './pages/EatStayVisitPage';
+import { SafetySOSPage } from './pages/SafetySOSPage';
 import { TravelPassportView } from './components/passport/TravelPassportView';
 import { LiveJourneyView } from './components/journey/LiveJourneyView';
 import { OfflineSyncBanner } from './components/recorder/OfflineSyncBanner';
@@ -56,6 +58,12 @@ const AppContent: React.FC = () => {
             setActiveTab={setActiveTab} 
           />
         );
+
+      case 'eat-stay':
+        return <EatStayVisitPage />;
+
+      case 'safety-sos':
+        return <SafetySOSPage />;
 
       case 'groups':
         return <GroupTravelPage />;
@@ -112,17 +120,19 @@ const AppContent: React.FC = () => {
         </main>
       </div>
 
-      <Footer />
-      <BottomNav 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onStartJourneyClick={() => handleStartRoute(currentRoute)}
-      />
+      <div>
+        <Footer />
+        <BottomNav 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          onStartJourneyClick={() => setActiveTab('explore')}
+        />
+      </div>
     </div>
   );
 };
 
-export function App() {
+export default function App() {
   return (
     <AuthProvider>
       <JourneyProvider>
@@ -131,5 +141,3 @@ export function App() {
     </AuthProvider>
   );
 }
-
-export default App;
