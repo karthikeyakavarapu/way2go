@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { X, Mail, User, Sparkles, LogIn, Lock } from 'lucide-react';
+import { X, Mail, User, LogIn, Lock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleAuthButton } from './GoogleAuthButton';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import type { UserRole } from '../../types';
 
 interface LoginPageProps {
   onClose: () => void;
@@ -16,51 +14,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('user');
   const [city, setCity] = useState('Chennai');
   const [area, setArea] = useState('Ramapuram');
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setAuthError(null);
 
     try {
       if (isSignUp) {
-        if (isSupabaseConfigured) {
-          const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { full_name: fullName, role, city, area }
-            }
-          });
-          if (error) throw error;
-        }
         registerUser({
-          full_name: fullName || 'Traveller',
-          email: email || 'user@way2go.in',
-          role,
+          full_name: fullName.trim() || 'Verified Traveller',
+          email: email.trim() || 'traveller@way2go.in',
+          role: 'user',
           registered_city: city,
           registered_area: area
         });
+        setSuccessMessage('Account created successfully! Welcome to WAY2GO.');
       } else {
-        if (isSupabaseConfigured) {
-          const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          if (error) throw error;
-        }
-        loginUser(email);
+        loginUser(email.trim() || 'user@way2go.in');
+        setSuccessMessage('Signed in successfully!');
       }
-      onClose();
-    } catch (err: any) {
-      setAuthError(err.message || 'Authentication failed. Please check credentials.');
-      loginUser(email || 'karthikakavarapuu@gmail.com');
-      onClose();
+
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +53,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1 cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -93,7 +73,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
           </p>
         </div>
 
-        {/* Official 1-Click Google Auth Button */}
+        {/* Success Banner */}
+        {successMessage && (
+          <div className="bg-emerald-500/20 border border-emerald-500/40 p-3 rounded-2xl text-emerald-300 text-xs text-center font-bold flex items-center justify-center gap-1.5 animate-pulse">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {/* Official Google Login Button */}
         <GoogleAuthButton onSuccess={onClose} />
 
         <div className="relative flex items-center justify-center my-1">
@@ -103,12 +91,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
           </span>
           <div className="border-t border-slate-800 w-full" />
         </div>
-
-        {authError && (
-          <div className="bg-rose-500/20 border border-rose-500/30 p-3 rounded-2xl text-rose-300 text-xs text-center font-semibold">
-            {authError}
-          </div>
-        )}
 
         {/* Form Inputs */}
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
@@ -122,7 +104,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Karthik Akavarapu"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-3.5 py-3 text-slate-100 font-medium focus:outline-none focus:border-sky-500 transition-colors"
                   required
                 />
               </div>
@@ -137,8 +119,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. karthikakavarapuu@gmail.com"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-sky-500"
+                placeholder="name@example.com"
+                className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-3.5 py-3 text-slate-100 font-medium focus:outline-none focus:border-sky-500 transition-colors"
                 required
               />
             </div>
@@ -153,78 +135,70 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onClose }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-3.5 py-3 text-slate-100 font-medium focus:outline-none focus:border-sky-500 transition-colors"
                 required
               />
             </div>
           </div>
 
           {isSignUp && (
-            <>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-slate-300 font-semibold block mb-1">Account Role</label>
+                <label className="text-[11px] text-slate-300 font-semibold block mb-1">Registered City</label>
                 <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-semibold"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-3 py-3 text-slate-200 font-medium focus:outline-none focus:border-sky-500"
                 >
-                  <option value="user">👤 Traveller (Discover & Follow Routes)</option>
-                  <option value="contributor">🎥 Route Contributor (Record & Share Routes)</option>
-                  <option value="operator">🚌 Group Transport Operator (Provide Bus/Van Offers)</option>
-                  <option value="admin">🛡️ Platform Administrator</option>
-                  <option value="developer">💻 System Engineer (Developer Diagnostics)</option>
+                  <option value="Chennai">Chennai</option>
+                  <option value="Puducherry">Puducherry</option>
+                  <option value="Hyderabad">Hyderabad</option>
+                  <option value="Bengaluru">Bengaluru</option>
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[11px] text-slate-300 font-semibold block mb-1">City</label>
-                  <select
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
-                  >
-                    <option value="Chennai">Chennai</option>
-                    <option value="Puducherry">Puducherry</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Delhi">Delhi</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-slate-300 font-semibold block mb-1">Area</label>
-                  <input
-                    type="text"
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder="e.g. Ramapuram"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-100"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="text-[11px] text-slate-300 font-semibold block mb-1">Local Area</label>
+                <input
+                  type="text"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="e.g. Ramapuram"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-3 py-3 text-slate-100 font-medium focus:outline-none focus:border-sky-500"
+                />
               </div>
-            </>
+            </div>
           )}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4 text-white" />
-            <span>{isLoading ? 'SIGNING IN...' : isSignUp ? 'CREATE ACCOUNT & GET STARTED' : 'SIGN IN NOW'}</span>
+            <span>
+              {isLoading 
+                ? 'Processing...' 
+                : isSignUp 
+                ? 'CREATE TRAVELLER ACCOUNT' 
+                : 'SIGN IN TO WAY2GO'}
+            </span>
           </button>
         </form>
 
-        <div className="text-center pt-2 border-t border-slate-800 text-xs">
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sky-400 font-extrabold hover:underline cursor-pointer"
-          >
-            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Register Now"}
-          </button>
+        {/* Toggle Switcher */}
+        <div className="text-center pt-2 border-t border-slate-900">
+          <p className="text-xs text-slate-400">
+            {isSignUp ? 'Already have an account?' : "Don't have an account yet?"}{' '}
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sky-400 font-bold hover:underline cursor-pointer ml-1"
+            >
+              {isSignUp ? 'Sign In' : 'Create Account'}
+            </button>
+          </p>
         </div>
+
       </div>
     </div>
   );
