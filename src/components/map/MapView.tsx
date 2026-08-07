@@ -46,11 +46,18 @@ const MapRecenter: React.FC<{ coords: LatLng[]; activeStepCoord?: LatLng; forceT
   const map = useMap();
 
   useEffect(() => {
-    if (activeStepCoord) {
-      map.flyTo([activeStepCoord.lat, activeStepCoord.lng], 16, { duration: 1.2 });
-    } else if (coords && coords.length > 0) {
-      const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng]));
-      map.fitBounds(bounds, { padding: [40, 40] });
+    try {
+      if (activeStepCoord && typeof activeStepCoord.lat === 'number' && typeof activeStepCoord.lng === 'number') {
+        map.flyTo([activeStepCoord.lat, activeStepCoord.lng], 16, { duration: 1.2 });
+      } else if (coords && coords.length > 0) {
+        const valid = coords.filter(c => c && typeof c.lat === 'number' && typeof c.lng === 'number');
+        if (valid.length > 0) {
+          const bounds = L.latLngBounds(valid.map(c => [c.lat, c.lng]));
+          map.fitBounds(bounds, { padding: [40, 40] });
+        }
+      }
+    } catch (err) {
+      console.warn('Map bounds fit warning:', err);
     }
   }, [coords, activeStepCoord, forceTrigger, map]);
 
@@ -76,13 +83,20 @@ export const MapView: React.FC<MapViewProps> = ({
   const [mapMode, setMapMode] = useState<'standard' | 'satellite'>('standard');
   const [recenterTrigger, setRecenterTrigger] = useState(0);
 
-  const defaultCenter: LatLng = route?.origin_coords || { lat: 13.0336, lng: 80.1802 };
+  const defaultCenter: LatLng = (route?.origin_coords && typeof route.origin_coords.lat === 'number') 
+    ? route.origin_coords 
+    : { lat: 13.0336, lng: 80.1802 };
 
-  const allCoords: LatLng[] = route
-    ? route.segments.flatMap(s => s.polyline_coords)
+  const rawCoords: LatLng[] = (route && route.segments)
+    ? route.segments.flatMap(s => (s.polyline_coords && s.polyline_coords.length > 0) 
+        ? s.polyline_coords 
+        : (s.start_location ? [s.start_location] : []))
     : [defaultCenter];
 
-  const activeSegment = (route && activeStepIndex !== undefined && route.segments[activeStepIndex]) 
+  const validCoords = rawCoords.filter(c => c && typeof c.lat === 'number' && typeof c.lng === 'number');
+  const allCoords = validCoords.length > 0 ? validCoords : [defaultCenter];
+
+  const activeSegment = (route && activeStepIndex !== undefined && route.segments && route.segments[activeStepIndex]) 
     ? route.segments[activeStepIndex] 
     : null;
 
